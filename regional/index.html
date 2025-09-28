@@ -2,433 +2,491 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  />
   <title>Regional Performance Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    html, body { height: 100%; }
+    .btn { @apply px-4 py-2 rounded-lg font-medium; }
+    .btn-primary { @apply bg-indigo-600 text-white hover:bg-indigo-700; }
+    .btn-muted { @apply bg-gray-200 text-gray-700 hover:bg-gray-300; }
+    .btn-green { @apply bg-green-600 text-white hover:bg-green-700; }
+    .btn-blue { @apply bg-blue-600 text-white hover:bg-blue-700; }
+    .btn-purple { @apply bg-purple-600 text-white hover:bg-purple-700; }
+    .btn-red { @apply bg-red-600 text-white hover:bg-red-700; }
+  </style>
 </head>
-<body class="bg-slate-50 text-slate-800">
+<body class="bg-gradient-to-br from-indigo-50 to-purple-100 min-h-screen">
+  <div id="toast" class="fixed top-4 right-4 hidden"></div>
 
-  <!-- Page wrapper -->
-  <div class="max-w-7xl mx-auto p-4 md:p-6">
+  <div class="container mx-auto px-4 py-6">
     <!-- Header -->
-    <div class="bg-white shadow-sm rounded-xl p-5 md:p-6">
-      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
         <div>
-          <h1 class="text-2xl md:text-3xl font-bold">Regional Performance Dashboard</h1>
-          <div class="mt-2 text-sm text-slate-600">Canada Region</div>
+          <h1 class="text-3xl font-bold text-gray-800">Regional Performance Dashboard</h1>
+          <p class="text-gray-600" id="regionSummary">Canada Region — 0 Franchise Locations</p>
         </div>
 
         <div class="flex flex-wrap items-center gap-3">
-          <select id="monthSelect" class="px-3 py-2 border rounded-lg">
-            <!-- Filled at runtime with months -->
-          </select>
-          <select id="regionSelect" class="px-3 py-2 border rounded-lg">
+          <!-- Region -->
+          <select id="regionSelect" class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
             <option value="canada" selected>Canada</option>
+            <option value="pacific-northwest">Pacific Northwest</option>
+            <option value="northeast">Northeast</option>
           </select>
-          <button id="refreshBtn"
-                  class="px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700">
-            Refresh
-          </button>
+
+          <!-- Month -->
+          <select id="monthSelect" class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+            <!-- default to current-ish months -->
+            <option value="2025-09" selected>September 2025</option>
+            <option value="2025-10">October 2025</option>
+            <option value="2025-11">November 2025</option>
+            <option value="2025-12">December 2025</option>
+          </select>
+
+          <button id="refreshBtn" class="btn btn-blue">Refresh</button>
         </div>
       </div>
 
-      <!-- View + Rank toggles -->
-      <div class="mt-5 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-        <div class="flex items-center gap-2">
-          <button data-view="weekly"   class="view-btn px-3 py-1.5 rounded-lg border bg-white">Weekly</button>
-          <button data-view="monthly"  class="view-btn px-3 py-1.5 rounded-lg border bg-indigo-600 text-white">Monthly</button>
-          <button data-view="quarterly"class="view-btn px-3 py-1.5 rounded-lg border bg-white">Quarterly</button>
-          <button data-view="ytd"      class="view-btn px-3 py-1.5 rounded-lg border bg-white">YTD</button>
-        </div>
+      <!-- View Toggle -->
+      <div class="flex flex-wrap gap-2 mb-4">
+        <button id="weeklyView" class="btn btn-primary">Weekly</button>
+        <button id="monthlyView" class="btn btn-muted">Monthly</button>
+        <button id="quarterlyView" class="btn btn-muted">Quarterly</button>
+        <button id="ytdView" class="btn btn-muted">YTD</button>
+      </div>
 
-        <div class="flex items-center gap-2">
-          <span class="text-sm text-slate-600">Rank by:</span>
-          <button data-rank="sales"       class="rank-btn px-3 py-1.5 rounded-lg border bg-green-100 text-green-800">Sales</button>
-          <button data-rank="closingRate" class="rank-btn px-3 py-1.5 rounded-lg border bg-white">Closing Rate</button>
-          <button data-rank="avgTicket"   class="rank-btn px-3 py-1.5 rounded-lg border bg-white">Avg Ticket</button>
-        </div>
+      <!-- Rank Toggle -->
+      <div class="flex flex-wrap items-center gap-2">
+        <span class="text-sm font-medium text-gray-700 py-2">Rank by:</span>
+        <button id="rankBySales" class="btn bg-green-600 text-white">Sales</button>
+        <button id="rankByClosing" class="btn btn-muted">Closing Rate</button>
+        <button id="rankByTicket" class="btn btn-muted">Avg Ticket</button>
       </div>
     </div>
 
     <!-- KPI Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-      <div class="bg-white rounded-xl shadow-sm p-5">
-        <div class="text-sm text-slate-500">Total Active Designers</div>
-        <div id="kpiDesigners" class="mt-2 text-3xl font-bold">--</div>
-      </div>
-      <div class="bg-white rounded-xl shadow-sm p-5">
-        <div class="text-sm text-slate-500">Avg Designer Performance</div>
-        <div id="kpiPerformance" class="mt-2 text-3xl font-bold">--</div>
-      </div>
-      <div class="bg-white rounded-xl shadow-sm p-5">
-        <div class="text-sm text-slate-500">Avg Sales Per Designer</div>
-        <div id="kpiAvgSales" class="mt-2 text-3xl font-bold">--</div>
-      </div>
-    </div>
-
-    <!-- Performance tracking -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-      <div class="bg-white rounded-xl shadow-sm p-5">
-        <div class="text-sm text-slate-500">Average Conversion Rate</div>
-        <div id="trendConversion" class="mt-2 text-2xl font-semibold">--</div>
-        <div id="trendConversionPrev" class="text-xs text-slate-500">Previous Month: —</div>
-      </div>
-      <div class="bg-white rounded-xl shadow-sm p-5">
-        <div class="text-sm text-slate-500">Average Ticket Value</div>
-        <div id="trendTicket" class="mt-2 text-2xl font-semibold">--</div>
-        <div id="trendTicketPrev" class="text-xs text-slate-500">Previous Month: —</div>
-      </div>
-      <div class="bg-white rounded-xl shadow-sm p-5">
-        <div class="text-sm text-slate-500">Average Appointments</div>
-        <div id="trendAppts" class="mt-2 text-2xl font-semibold">--</div>
-        <div class="text-xs text-slate-500">Per designer / month</div>
-      </div>
-    </div>
-
-    <!-- Table + Actions -->
-    <div class="bg-white rounded-xl shadow-sm p-5 mt-4">
-      <div class="flex items-center justify-between mb-4">
-        <div>
-          <div class="font-semibold">Regional Designer Performance Rankings</div>
-          <div id="periodLabel" class="text-xs text-slate-500">Current Period: —</div>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+      <div class="bg-white rounded-lg shadow-lg p-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm font-medium text-gray-600">Total Active Designers</p>
+            <p class="text-2xl font-bold text-indigo-600" id="totalDesigners">0</p>
+            <p class="text-sm text-green-600" id="designersChange">—</p>
+          </div>
+          <div class="p-3 bg-indigo-100 rounded-full">
+            <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+            </svg>
+          </div>
         </div>
-        <div class="flex items-center gap-3">
-          <button id="manageLocationsBtn"
-                  class="px-4 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700">
-            Manage Locations
-          </button>
-          <button id="filterDesignersBtn"
-                  class="px-4 py-2 rounded-lg bg-violet-600 text-white hover:bg-violet-700">
-            Filter Designers
-          </button>
-          <button id="exportBtn"
-                  class="px-4 py-2 rounded-lg bg-slate-800 text-white hover:bg-slate-900">
-            Export Data
-          </button>
+      </div>
+
+      <div class="bg-white rounded-lg shadow-lg p-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm font-medium text-gray-600">Avg Designer Performance</p>
+            <p class="text-2xl font-bold text-green-600" id="avgDesignerPerformance">—</p>
+            <p class="text-sm text-green-600" id="avgPerfChange">—</p>
+          </div>
+          <div class="p-3 bg-green-100 rounded-full">
+            <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 00-2-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-lg shadow-lg p-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm font-medium text-gray-600">Avg Sales Per Designer</p>
+            <p class="text-2xl font-bold text-purple-600" id="avgSalesPerDesigner">—</p>
+            <p class="text-sm text-green-600" id="avgSalesChange">—</p>
+          </div>
+          <div class="p-3 bg-purple-100 rounded-full">
+            <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Designer Table -->
+    <div class="bg-white rounded-lg shadow-lg overflow-hidden mb-6">
+      <div class="p-6 border-b border-gray-200">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-xl font-bold text-gray-800">Regional Designer Performance Rankings</h2>
+            <p class="text-gray-600">Current Period: <span id="currentPeriod">Week of September 2–8, 2025</span></p>
+          </div>
+          <div class="flex flex-wrap gap-3">
+            <button id="manageFranchisesBtn" class="btn btn-green">Manage Locations</button>
+            <button id="exportDataBtn" class="btn btn-blue">Export Data</button>
+          </div>
         </div>
       </div>
 
       <div class="overflow-x-auto">
-        <table class="w-full text-sm">
-          <thead class="bg-slate-50">
+        <table class="w-full">
+          <thead class="bg-gray-50">
             <tr>
-              <th class="text-left px-3 py-2">RANK</th>
-              <th class="text-left px-3 py-2">DESIGNER</th>
-              <th class="text-left px-3 py-2">FRANCHISE LOCATION</th>
-              <th class="text-left px-3 py-2">MONTHLY SALES</th>
-              <th class="text-left px-3 py-2">AVG TICKET</th>
-              <th class="text-left px-3 py-2">CONVERSION RATE</th>
-              <th class="text-left px-3 py-2">PERFORMANCE</th>
-              <th class="text-left px-3 py-2">ACTIONS</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rank</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Designer</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Franchise</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Monthly Sales</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Avg Ticket</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Conversion Rate</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Performance</th>
             </tr>
           </thead>
-          <tbody id="rankingsBody" class="divide-y">
-            <!-- rows injected here -->
+          <tbody id="designerTableBody" class="bg-white divide-y divide-gray-200">
+            <!-- Rows injected -->
           </tbody>
         </table>
       </div>
     </div>
+
+    <!-- Top Designers -->
+    <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+      <h3 class="text-lg font-bold text-gray-800 mb-4">⭐ Top Regional Designers</h3>
+      <div class="space-y-4" id="topDesigners"></div>
+    </div>
   </div>
 
   <!-- Manage Locations Modal -->
-  <div id="locationsModal"
-       class="fixed inset-0 bg-black/40 hidden items-center justify-center z-50">
-    <div class="bg-white w-[95%] max-w-2xl rounded-xl shadow-xl">
-      <div class="p-5 border-b flex items-center justify-between">
-        <h3 class="font-semibold text-lg">Manage Franchise Locations</h3>
-        <button id="closeLocationsModal" class="text-slate-500 hover:text-slate-800">&times;</button>
+  <div id="manageModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-lg p-6 w-full max-w-3xl mx-4 max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-xl font-bold text-gray-900">Manage Franchise Locations</h3>
+        <button id="closeManage" class="text-gray-500 hover:text-gray-700">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
       </div>
 
-      <div class="p-5 space-y-4">
-        <!-- Add form -->
-        <form id="addLocationForm" class="grid grid-cols-1 md:grid-cols-4 gap-3">
+      <!-- Add Location -->
+      <div class="bg-green-50 rounded-lg p-4 mb-6">
+        <h4 class="font-semibold text-green-800 mb-3">Add New Franchise</h4>
+        <form id="addLocationForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label class="text-xs text-slate-600">Slug</label>
-            <input required id="locSlug" placeholder="e.g. tierney"
-                   class="mt-1 w-full px-3 py-2 border rounded-lg" />
-            <p class="text-[11px] text-slate-500 mt-1">
-              Lowercase, hyphenated, unique (e.g. <code>vancouver-downtown</code>)
-            </p>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Slug (URL id)</label>
+            <input id="locSlug" type="text" placeholder="tierney" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500" required />
+            <p class="text-xs text-gray-500 mt-1">Lowercase letters, numbers, and dashes only.</p>
           </div>
           <div>
-            <label class="text-xs text-slate-600">Name</label>
-            <input required id="locName" placeholder="Team Tierney"
-                   class="mt-1 w-full px-3 py-2 border rounded-lg"/>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Name</label>
+            <input id="locName" type="text" placeholder="Team Tierney" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500" required />
           </div>
           <div>
-            <label class="text-xs text-slate-600">City</label>
-            <input required id="locCity" placeholder="Tri-Cities"
-                   class="mt-1 w-full px-3 py-2 border rounded-lg"/>
+            <label class="block text-sm font-medium text-gray-700 mb-1">City</label>
+            <input id="locCity" type="text" placeholder="Toronto" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500" required />
           </div>
           <div>
-            <label class="text-xs text-slate-600">Province</label>
-            <input required id="locProvince" placeholder="BC"
-                   class="mt-1 w-full px-3 py-2 border rounded-lg"/>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Province</label>
+            <input id="locProvince" type="text" placeholder="Ontario" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500" required />
           </div>
-          <div class="md:col-span-4">
-            <button class="w-full md:w-auto px-4 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700">
-              Save Location
-            </button>
+
+          <div class="md:col-span-2 flex items-center gap-3">
+            <button type="submit" class="btn btn-green">Save Location</button>
+            <span id="locStatus" class="hidden text-sm"></span>
           </div>
         </form>
-
-        <!-- Status -->
-        <div id="locStatus" class="hidden text-sm"></div>
-
-        <!-- Existing locations -->
-        <div>
-          <div class="flex items-center justify-between mb-2">
-            <h4 class="font-semibold">Existing Locations</h4>
-            <button id="reloadLocations"
-                    class="px-3 py-1.5 rounded-lg border hover:bg-slate-50">
-              Reload
-            </button>
-          </div>
-
-          <div class="overflow-x-auto">
-            <table class="w-full text-sm">
-              <thead class="bg-slate-50">
-                <tr>
-                  <th class="text-left px-3 py-2">Slug</th>
-                  <th class="text-left px-3 py-2">Name</th>
-                  <th class="text-left px-3 py-2">City</th>
-                  <th class="text-left px-3 py-2">Province</th>
-                  <th class="text-left px-3 py-2">Created</th>
-                </tr>
-              </thead>
-              <tbody id="locationsBody" class="divide-y">
-                <!-- rows injected -->
-              </tbody>
-            </table>
-          </div>
-        </div>
       </div>
 
-      <div class="p-5 border-t flex justify-end">
-        <button id="closeLocationsModal2"
-                class="px-4 py-2 rounded-lg border hover:bg-slate-50">
-          Close
-        </button>
+      <!-- Existing Locations -->
+      <div class="bg-gray-50 rounded-lg p-4">
+        <div class="flex items-center justify-between mb-3">
+          <h4 class="font-semibold text-gray-800">Current Locations</h4>
+          <button id="reloadLocations" class="btn btn-muted">Reload</button>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead class="bg-white">
+              <tr>
+                <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Slug</th>
+                <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">City</th>
+                <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Province</th>
+                <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Created</th>
+              </tr>
+            </thead>
+            <tbody id="locationsTableBody" class="bg-white divide-y divide-gray-200">
+              <!-- Rows injected -->
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- Toast -->
-  <div id="toast"
-       class="fixed bottom-4 left-1/2 -translate-x-1/2 hidden bg-slate-900 text-white text-sm px-4 py-2 rounded-lg shadow-lg">
-    Saved!
-  </div>
-
   <script>
-    /***********************
-     * Page State
-     ***********************/
-    const state = {
-      view: 'monthly',         // weekly | monthly | quarterly | ytd (UI only)
-      rankBy: 'sales',         // sales | closingRate | avgTicket (UI only)
-      region: 'canada',
-      month: '',               // YYYY-MM
-      data: null               // latest payload from /api/metrics/region
-    };
+    // ====== tiny helpers ======
+    const $ = (sel, root = document) => root.querySelector(sel);
+    const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
-    /***********************
-     * Helpers
-     ***********************/
-    const $ = sel => document.querySelector(sel);
-    const $$ = sel => Array.from(document.querySelectorAll(sel));
-
-    function showToast(msg = 'Saved!') {
-      const el = $('#toast');
+    function showToast(msg) {
+      const el = document.getElementById('toast');
+      el.className = 'fixed top-4 right-4 bg-black text-white text-sm rounded px-3 py-2 shadow';
       el.textContent = msg;
-      el.classList.remove('hidden');
-      setTimeout(() => el.classList.add('hidden'), 2000);
+      setTimeout(() => { el.className = 'fixed top-4 right-4 hidden'; }, 2000);
     }
 
-    function setBusy(el, busy) {
+    function setBusy(btn, busy) {
+      if (!btn) return;
       if (busy) {
-        el.setAttribute('disabled', 'true');
-        el.classList.add('opacity-60', 'cursor-not-allowed');
+        btn.dataset.label = btn.textContent;
+        btn.disabled = true;
+        btn.textContent = 'Working...';
+        btn.classList.add('opacity-60', 'cursor-not-allowed');
       } else {
-        el.removeAttribute('disabled');
-        el.classList.remove('opacity-60', 'cursor-not-allowed');
+        btn.disabled = false;
+        if (btn.dataset.label) btn.textContent = btn.dataset.label;
+        btn.classList.remove('opacity-60', 'cursor-not-allowed');
       }
     }
 
-    function formatMoney(n) {
-      if (n == null || isNaN(n)) return '--';
-      return n.toLocaleString(undefined, { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
+    // ====== state ======
+    let currentView = 'weekly';
+    let currentMonth = '2025-09';
+    let currentRegion = 'canada';
+    let currentRankingCriteria = 'sales';
+
+    // endpoints (adjust if needed)
+    const REGION_METRICS_ENDPOINT = '/api/metrics/region';
+    const FRANCHISES_CREATE_ENDPOINT = '/api/franchises/create';
+    const FRANCHISES_LIST_ENDPOINT = '/api/franchises/list';
+
+    // ====== init ======
+    function init() {
+      bindUI();
+      refreshData();
     }
 
-    function pct(n) {
-      if (n == null || isNaN(n)) return '--';
-      return `${n.toFixed(1)}%`;
+    function bindUI() {
+      // views
+      $('#weeklyView').addEventListener('click', () => switchView('weekly'));
+      $('#monthlyView').addEventListener('click', () => switchView('monthly'));
+      $('#quarterlyView').addEventListener('click', () => switchView('quarterly'));
+      $('#ytdView').addEventListener('click', () => switchView('ytd'));
+
+      // ranking
+      $('#rankBySales').addEventListener('click', () => switchRanking('sales'));
+      $('#rankByClosing').addEventListener('click', () => switchRanking('closing'));
+      $('#rankByTicket').addEventListener('click', () => switchRanking('ticket'));
+
+      // selects
+      $('#monthSelect').addEventListener('change', (e) => {
+        currentMonth = e.target.value;
+        refreshData();
+      });
+      $('#regionSelect').addEventListener('change', (e) => {
+        currentRegion = e.target.value;
+        refreshData();
+      });
+
+      // refresh
+      $('#refreshBtn').addEventListener('click', () => refreshData());
+
+      // manage modal
+      $('#manageFranchisesBtn').addEventListener('click', async () => {
+        await loadLocationsList();
+        showModal('#manageModal');
+      });
+      $('#closeManage').addEventListener('click', () => hideModal('#manageModal'));
+      $('#reloadLocations').addEventListener('click', loadLocationsList);
+
+      // add location form
+      $('#addLocationForm').addEventListener('submit', addLocation);
+
+      // export
+      $('#exportDataBtn').addEventListener('click', exportData);
     }
 
-    function monthOptions() {
-      // Simple: current month + 11 previous
-      const out = [];
-      const now = new Date();
-      for (let i = 0; i < 12; i++) {
-        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-        const ym = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
-        const label = d.toLocaleString(undefined, { month: 'long', year: 'numeric' });
-        out.push({ value: ym, label });
+    function showModal(sel) {
+      const el = $(sel);
+      if (!el) return;
+      el.classList.remove('hidden');
+      el.classList.add('flex');
+    }
+    function hideModal(sel) {
+      const el = $(sel);
+      if (!el) return;
+      el.classList.add('hidden');
+      el.classList.remove('flex');
+    }
+
+    // ====== data fetching / rendering ======
+    async function refreshData() {
+      try {
+        const url = `${REGION_METRICS_ENDPOINT}?region=${encodeURIComponent(currentRegion)}&month=${encodeURIComponent(currentMonth)}`;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`Metrics error: ${res.status}`);
+        const data = await res.json();
+
+        // data shape: { "<franchise-slug>": { totals: {...}, designers: [...] }, ... }
+        renderFromMetrics(data);
+      } catch (err) {
+        console.error(err);
+        showToast('Failed to load metrics');
       }
-      return out;
     }
 
-    function setRankButtonActive(key) {
-      $$('.rank-btn').forEach(btn => {
-        if (btn.dataset.rank === key) {
-          btn.classList.remove('bg-white');
-          btn.classList.add('bg-green-100','text-green-800');
-        } else {
-          btn.classList.remove('bg-green-100','text-green-800');
-          btn.classList.add('bg-white');
-        }
-      });
-    }
+    function renderFromMetrics(regionData) {
+      // Flatten designers
+      const allDesigners = [];
+      let franchiseCount = 0;
 
-    function setViewButtonActive(view) {
-      $$('.view-btn').forEach(btn => {
-        if (btn.dataset.view === view) {
-          btn.classList.remove('bg-white');
-          btn.classList.add('bg-indigo-600','text-white');
-        } else {
-          btn.classList.remove('bg-indigo-600','text-white');
-          btn.classList.add('bg-white');
-        }
-      });
-    }
-
-    /***********************
-     * Data Loading
-     ***********************/
-    async function fetchMetrics() {
-      const url = `/api/metrics/region?region=${encodeURIComponent(state.region)}&month=${encodeURIComponent(state.month)}`;
-      const res = await fetch(url);
-      if (!res.ok) throw new Error(`Metrics request failed: ${res.status}`);
-      return res.json();
-    }
-
-    function deriveKPIs(payload) {
-      // Your API shapes by franchise; here we aggregate simply for demo
-      // Expecting payload like: { "downtown-seattle": { totals: {...}, designers:[...] }, ... }
-      const franchises = Object.values(payload || {});
-      const allDesigners = franchises.flatMap(f => f.designers || []);
-
-      const totalDesigners = allDesigners.length || 0;
-      const avgSales = allDesigners.length
-        ? allDesigners.reduce((s, d) => s + (d.monthlySales || 0), 0) / allDesigners.length
-        : 0;
-
-      // Demo placeholders
-      const perfLabel = totalDesigners > 0 ? 'Good' : '--';
-      const conversion = null; // if you have it, set a number
-      const ticket = null;
-      const appts = 22; // demo
-
-      return {
-        totalDesigners,
-        perfLabel,
-        avgSales,
-        conversion,
-        ticket,
-        appts
-      };
-    }
-
-    function renderKPIs(kpis) {
-      $('#kpiDesigners').textContent = kpis.totalDesigners || '--';
-      $('#kpiPerformance').textContent = kpis.perfLabel || '--';
-      $('#kpiAvgSales').textContent = kpis.avgSales ? formatMoney(kpis.avgSales) : '--';
-
-      $('#trendConversion').textContent = kpis.conversion != null ? pct(kpis.conversion) : '--';
-      $('#trendConversionPrev').textContent = 'Previous Month: —';
-      $('#trendTicket').textContent = kpis.ticket != null ? formatMoney(kpis.ticket) : '--';
-      $('#trendTicketPrev').textContent = 'Previous Month: —';
-      $('#trendAppts').textContent = kpis.appts ?? '--';
-
-      const d = new Date(state.month + '-01');
-      const lbl = `Current Period: ${d.toLocaleString(undefined, { month: 'long', year: 'numeric' })}`;
-      $('#periodLabel').textContent = lbl;
-    }
-
-    function renderTable(payload) {
-      const body = $('#rankingsBody');
-      body.innerHTML = '';
-
-      // Flatten & sort by rank selection (very basic demo)
-      const rows = [];
-      Object.entries(payload || {}).forEach(([slug, f]) => {
-        (f.designers || []).forEach(d => {
-          rows.push({
-            slug,
-            designer: d.name,
-            monthlySales: d.monthlySales || 0,
-            avgTicket: d.avgTicket || 0,
-            closingRate: d.closingRate || 0
+      Object.entries(regionData || {}).forEach(([slug, bundle]) => {
+        franchiseCount++;
+        (bundle.designers || []).forEach(d => {
+          allDesigners.push({
+            ...d,
+            franchiseSlug: slug,
+            franchiseName: d.franchiseName || slug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
+            avgTicket: d.avgTicket ?? Math.round((d.monthlySales || 0) / Math.max(1, d.salesClosed || 1)),
+            conversionRate: d.conversionRate ?? d.closingRate ?? 0
           });
         });
       });
 
-      const key = state.rankBy;
-      const sortKey = (r) => {
-        if (key === 'closingRate') return r.closingRate || 0;
-        if (key === 'avgTicket') return r.avgTicket || 0;
-        return r.monthlySales || 0;
-      };
+      // KPIs
+      const totalDesigners = allDesigners.length;
+      const totalSales = allDesigners.reduce((s, d) => s + (d.monthlySales || 0), 0);
+      const avgSalesPerDesigner = totalDesigners ? Math.round(totalSales / totalDesigners) : 0;
+      const avgPerformancePct = totalDesigners
+        ? (allDesigners.reduce((s, d) => s + (d.monthlySales / Math.max(1, d.monthlyGoal || d.goal || d.monthlySales || 1)), 0) / totalDesigners) * 100
+        : 0;
 
-      rows.sort((a,b) => sortKey(b) - sortKey(a));
+      $('#regionSummary').textContent = `${regionLabel(currentRegion)} — ${franchiseCount} Franchise Location${franchiseCount === 1 ? '' : 's'}`;
+      $('#totalDesigners').textContent = totalDesigners;
+      $('#avgSalesPerDesigner').textContent = avgSalesPerDesigner ? `$${avgSalesPerDesigner.toLocaleString()}` : '—';
+      $('#avgDesignerPerformance').textContent = isFinite(avgPerformancePct) && avgPerformancePct > 0 ? `${avgPerformancePct.toFixed(1)}%` : '—';
+      $('#designersChange').textContent = '';
+      $('#avgPerfChange').textContent = '';
+      $('#avgSalesChange').textContent = '';
 
-      rows.forEach((r, i) => {
+      // sort & render table by criteria
+      let sorted = [...allDesigners];
+      sorted.sort((a, b) => {
+        if (currentRankingCriteria === 'sales') return (b.monthlySales || 0) - (a.monthlySales || 0);
+        if (currentRankingCriteria === 'closing') return (b.conversionRate || 0) - (a.conversionRate || 0);
+        if (currentRankingCriteria === 'ticket') return (b.avgTicket || 0) - (a.avgTicket || 0);
+        return 0;
+      });
+
+      // render table
+      const body = $('#designerTableBody');
+      body.innerHTML = '';
+      sorted.forEach((d, idx) => {
+        const rank = idx + 1;
+        const goalPct = d.goal ? (d.monthlySales / Math.max(1, d.goal)) * 100
+                               : d.monthlyGoal ? (d.monthlySales / Math.max(1, d.monthlyGoal)) * 100
+                                               : 0;
+
+        const performanceIcon = goalPct >= 95 ? '🌟' : goalPct >= 80 ? '✅' : goalPct >= 60 ? '⚠️' : '🔴';
+
         const tr = document.createElement('tr');
+        tr.className = 'hover:bg-gray-50';
         tr.innerHTML = `
-          <td class="px-3 py-2">${i+1}</td>
-          <td class="px-3 py-2">${r.designer ?? '--'}</td>
-          <td class="px-3 py-2">${r.slug}</td>
-          <td class="px-3 py-2">${formatMoney(r.monthlySales)}</td>
-          <td class="px-3 py-2">${r.avgTicket ? formatMoney(r.avgTicket) : '--'}</td>
-          <td class="px-3 py-2">${r.closingRate ? pct(r.closingRate) : '--'}</td>
-          <td class="px-3 py-2">—</td>
-          <td class="px-3 py-2">
-            <button class="text-indigo-600 hover:underline">View</button>
+          <td class="px-6 py-4 whitespace-nowrap">
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${rankBadge(rank)}">#${rank}</span>
           </td>
+          <td class="px-6 py-4 whitespace-nowrap">
+            <div class="font-medium text-gray-900">${d.name || '—'}</div>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap">
+            <div class="font-medium text-gray-900">
+              <a href="/franchise/${encodeURIComponent(d.franchiseSlug)}" target="_blank" class="text-indigo-600 hover:underline">${d.franchiseName}</a>
+            </div>
+            <div class="text-xs text-gray-500">${d.franchiseSlug}</div>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">$${(d.monthlySales || 0).toLocaleString()}</td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">$${(d.avgTicket || 0).toLocaleString()}</td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${(d.conversionRate ?? 0)}%</td>
+          <td class="px-6 py-4 whitespace-nowrap text-center text-lg">${performanceIcon}</td>
         `;
         body.appendChild(tr);
       });
+
+      // top designers
+      const topContainer = $('#topDesigners');
+      topContainer.innerHTML = '';
+      sorted.slice(0, 5).forEach((d, i) => {
+        const badge = i === 0 ? '🏆' : i === 1 ? '🥈' : i === 2 ? '🥉' : '⭐';
+        const row = document.createElement('div');
+        row.className = 'flex items-center justify-between p-3 bg-gray-50 rounded-lg';
+        row.innerHTML = `
+          <div class="flex items-center space-x-3">
+            <span class="text-lg">${badge}</span>
+            <div>
+              <div class="font-medium text-gray-900">${d.name || '—'}</div>
+              <div class="text-sm text-gray-500">
+                <a href="/franchise/${encodeURIComponent(d.franchiseSlug)}" target="_blank" class="text-indigo-600 hover:underline">${d.franchiseName}</a>
+              </div>
+            </div>
+          </div>
+          <div class="text-right">
+            <div class="font-semibold text-gray-900">$${(d.monthlySales || 0).toLocaleString()}</div>
+            <div class="text-sm text-green-600">${(d.conversionRate ?? 0)}% close • $${(d.avgTicket || 0)}</div>
+          </div>
+        `;
+        topContainer.appendChild(row);
+      });
     }
 
-    async function refreshData() {
-      try {
-        setBusy($('#refreshBtn'), true);
-        const payload = await fetchMetrics();
-        state.data = payload;
-        const kpis = deriveKPIs(payload);
-        renderKPIs(kpis);
-        renderTable(payload);
-      } catch (err) {
-        console.error(err);
-        showToast('API error. Check route or env vars.');
-      } finally {
-        setBusy($('#refreshBtn'), false);
-      }
+    function rankBadge(rank) {
+      if (rank === 1) return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      if (rank <= 5) return 'bg-green-100 text-green-800 border-green-200';
+      if (rank <= 15) return 'bg-blue-100 text-blue-800 border-blue-200';
+      return 'bg-gray-100 text-gray-800 border-gray-200';
     }
 
-    /***********************
-     * Locations modal logic
-     ***********************/
-    function openLocationsModal() {
-      $('#locationsModal').classList.remove('hidden');
-      $('#locationsModal').classList.add('flex');
-      loadLocationsList();
+    function regionLabel(slug) {
+      if (slug === 'canada') return 'Canada Region';
+      if (slug === 'pacific-northwest') return 'Pacific Northwest Region';
+      if (slug === 'northeast') return 'Northeast Region';
+      return slug;
     }
 
-    function closeLocationsModal() {
-      $('#locationsModal').classList.add('hidden');
-      $('#locationsModal').classList.remove('flex');
+    function switchView(view) {
+      currentView = view;
+      $$('#weeklyView, #monthlyView, #quarterlyView, #ytdView').forEach(b => b.className = 'btn btn-muted');
+      document.getElementById(view + 'View').className = 'btn btn-primary';
+
+      const periods = {
+        weekly: 'Week of September 2–8, 2025',
+        monthly: 'September 2025',
+        quarterly: 'Q3 2025',
+        ytd: 'January – September 2025'
+      };
+      $('#currentPeriod').textContent = periods[view] || periods.weekly;
     }
 
+    function switchRanking(criteria) {
+      currentRankingCriteria = criteria;
+      $('#rankBySales').className = 'btn btn-muted';
+      $('#rankByClosing').className = 'btn btn-muted';
+      $('#rankByTicket').className = 'btn btn-muted';
+
+      if (criteria === 'sales') $('#rankBySales').className = 'btn bg-green-600 text-white';
+      if (criteria === 'closing') $('#rankByClosing').className = 'btn bg-blue-600 text-white';
+      if (criteria === 'ticket') $('#rankByTicket').className = 'btn bg-purple-600 text-white';
+
+      refreshData();
+    }
+
+    // ====== Add Location (UPDATED to open new tab) ======
     async function addLocation(e) {
       e.preventDefault();
       const slug = $('#locSlug').value.trim();
@@ -445,9 +503,10 @@
         return;
       }
 
-      setBusy($('#addLocationForm button'), true);
+      const submitBtn = $('#addLocationForm button[type="submit"]');
+      setBusy(submitBtn, true);
       try {
-        const res = await fetch('/api/franchises/create', {
+        const res = await fetch(FRANCHISES_CREATE_ENDPOINT, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ slug, name, city, province })
@@ -463,51 +522,62 @@
         status.textContent = 'Location saved.';
         status.className = 'text-emerald-700 text-sm';
         showToast('Location saved');
-        // Clear inputs
+
+        // clear inputs
         $('#locSlug').value = '';
         $('#locName').value = '';
         $('#locCity').value = '';
         $('#locProvince').value = '';
 
+        // refresh list and dashboard
         await loadLocationsList();
-        // Also refresh dashboard data in case the new location affects metrics
         await refreshData();
+
+        // Open the new franchise dashboard in a new tab
+        window.open(`/franchise/${encodeURIComponent(slug)}`, '_blank');
       } catch (err) {
         console.error(err);
         status.textContent = 'Unexpected error.';
         status.className = 'text-red-600 text-sm';
       } finally {
-        setBusy($('#addLocationForm button'), false);
+        setBusy(submitBtn, false);
       }
     }
 
+    // ====== Load Locations List (UPDATED: clickable slugs) ======
     async function loadLocationsList() {
-      const body = $('#locationsBody');
-      body.innerHTML = `<tr><td class="px-3 py-2" colspan="5">Loading…</td></tr>`;
-      try {
-        // Uses your existing GET route at /api/franchises/get (or /api/franchises)
-        // In your repo there is api/franchises/get.js — we'll try that first.
-        let res = await fetch('/api/franchises/get').catch(() => null);
-        if (!res || !res.ok) {
-          // fallback to /api/franchises (if you implemented index.js GET)
-          res = await fetch('/api/franchises');
-        }
-        if (!res.ok) throw new Error('Failed to load locations');
+      const body = $('#locationsTableBody');
+      body.innerHTML = `
+        <tr>
+          <td class="px-3 py-4 text-sm text-gray-500" colspan="5">Loading…</td>
+        </tr>
+      `;
 
+      try {
+        const res = await fetch(FRANCHISES_LIST_ENDPOINT);
+        if (!res.ok) throw new Error(`List error ${res.status}`);
         const rows = await res.json();
-        if (!Array.isArray(rows) || rows.length === 0) {
-          body.innerHTML = `<tr><td class="px-3 py-2" colspan="5">No locations yet.</td></tr>`;
+
+        body.innerHTML = '';
+        if (!rows || rows.length === 0) {
+          body.innerHTML = `
+            <tr>
+              <td class="px-3 py-4 text-sm text-gray-500" colspan="5">No locations yet.</td>
+            </tr>
+          `;
           return;
         }
 
-        body.innerHTML = '';
         rows.forEach(r => {
           const tr = document.createElement('tr');
-          const created = r.created_at
-            ? new Date(r.created_at).toLocaleString()
-            : '—';
+          const created = r.created_at ? new Date(r.created_at).toLocaleString() : '—';
+          const slug = r.slug || '';
           tr.innerHTML = `
-            <td class="px-3 py-2">${r.slug || ''}</td>
+            <td class="px-3 py-2">
+              <a href="/franchise/${encodeURIComponent(slug)}" target="_blank" class="text-indigo-600 hover:underline">
+                ${slug}
+              </a>
+            </td>
             <td class="px-3 py-2">${r.name || ''}</td>
             <td class="px-3 py-2">${r.city || ''}</td>
             <td class="px-3 py-2">${r.province || ''}</td>
@@ -517,71 +587,54 @@
         });
       } catch (err) {
         console.error(err);
-        body.innerHTML = `<tr><td class="px-3 py-2 text-red-600" colspan="5">Failed to load locations.</td></tr>`;
+        body.innerHTML = `
+          <tr>
+            <td class="px-3 py-4 text-sm text-red-600" colspan="5">Failed to load locations.</td>
+          </tr>
+        `;
       }
     }
 
-    /***********************
-     * Event wiring
-     ***********************/
-    function wireEvents() {
-      // Refresh
-      $('#refreshBtn').addEventListener('click', refreshData);
+    // ====== Export CSV (simple) ======
+    async function exportData() {
+      try {
+        const url = `${REGION_METRICS_ENDPOINT}?region=${encodeURIComponent(currentRegion)}&month=${encodeURIComponent(currentMonth)}`;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error('Export fetch failed');
+        const data = await res.json();
 
-      // Rank buttons
-      $$('.rank-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          state.rankBy = btn.dataset.rank;
-          setRankButtonActive(state.rankBy);
-          // Only affects display ordering:
-          if (state.data) renderTable(state.data);
+        const rows = [];
+        rows.push(['Franchise', 'Designer', 'Monthly Sales', 'Avg Ticket', 'Conversion Rate']);
+        Object.entries(data || {}).forEach(([slug, bundle]) => {
+          (bundle.designers || []).forEach(d => {
+            rows.push([
+              slug,
+              d.name || '',
+              d.monthlySales || 0,
+              (d.avgTicket ?? Math.round((d.monthlySales || 0) / Math.max(1, d.salesClosed || 1))),
+              (d.conversionRate ?? d.closingRate ?? 0)
+            ]);
+          });
         });
-      });
 
-      // View buttons (UI-only toggles)
-      $$('.view-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          state.view = btn.dataset.view;
-          setViewButtonActive(state.view);
-        });
-      });
-
-      // Month select
-      $('#monthSelect').addEventListener('change', (e) => {
-        state.month = e.target.value;
-        refreshData();
-      });
-
-      // Manage Locations modal
-      $('#manageLocationsBtn').addEventListener('click', openLocationsModal);
-      $('#closeLocationsModal').addEventListener('click', closeLocationsModal);
-      $('#closeLocationsModal2').addEventListener('click', closeLocationsModal);
-      $('#addLocationForm').addEventListener('submit', addLocation);
-      $('#reloadLocations').addEventListener('click', loadLocationsList);
-
-      // Filter / Export placeholders
-      $('#filterDesignersBtn').addEventListener('click', () => showToast('Filter panel coming soon'));
-      $('#exportBtn').addEventListener('click', () => showToast('Exported CSV (demo)'));
+        const csv = rows.map(r => r.map(v => typeof v === 'string' && v.includes(',') ? `"${v}"` : v).join(',')).join('\n');
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const href = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = href;
+        link.download = `regional_${currentRegion}_${currentMonth}.csv`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(href);
+      } catch (err) {
+        console.error(err);
+        showToast('Export failed');
+      }
     }
 
-    /***********************
-     * Boot
-     ***********************/
-    function boot() {
-      // Month selector
-      const months = monthOptions();
-      const sel = $('#monthSelect');
-      sel.innerHTML = months.map((m,i) =>
-        `<option value="${m.value}" ${i===0?'selected':''}>${m.label}</option>`).join('');
-      state.month = months[0].value;
-
-      wireEvents();
-      setViewButtonActive(state.view);
-      setRankButtonActive(state.rankBy);
-      refreshData();
-    }
-
-    boot();
+    // boot
+    init();
   </script>
 </body>
 </html>
