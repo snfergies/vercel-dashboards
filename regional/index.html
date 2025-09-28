@@ -1,285 +1,387 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Regional Performance Dashboard</title>
+  <!-- Tailwind (fine for a quick dashboard) -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .btn { @apply px-3 py-1.5 rounded-md border text-sm transition; }
+    .btn-ghost { @apply border-slate-200 bg-white hover:bg-slate-50; }
+    .btn-active { @apply bg-indigo-600 text-white border-indigo-600; }
+    .chip { @apply px-2 py-0.5 rounded-full text-xs font-medium; }
+    .number-skel { @apply h-4 w-16 rounded bg-slate-200 animate-pulse inline-block; }
+    .row-skel { @apply h-4 w-full rounded bg-slate-200 animate-pulse; }
+  </style>
 </head>
-<body class="min-h-screen bg-slate-50 text-slate-800">
-<main class="max-w-6xl mx-auto p-4 sm:p-6">
-  <!-- Header -->
-  <section class="bg-white rounded-xl shadow p-5 mb-6">
-    <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-      <div>
-        <h1 class="text-2xl font-bold">Regional Performance Dashboard</h1>
-        <p class="text-sm text-slate-500">Canada Region</p>
-      </div>
+<body class="bg-slate-50">
+  <main class="max-w-7xl mx-auto p-4 sm:p-6">
+    <!-- Header / Controls -->
+    <section class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 sm:p-6 mb-6">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 class="text-2xl sm:text-3xl font-semibold text-slate-900">Regional Performance Dashboard</h1>
+          <p class="text-slate-500 mt-0.5" id="regionLabel">Canada Region</p>
+        </div>
 
-      <div class="flex flex-wrap items-center gap-3">
-        <select id="monthSelect" class="border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
-          <option value="2025-09" selected>September 2025</option>
-          <option value="2025-10">October 2025</option>
-          <option value="2025-11">November 2025</option>
-          <option value="2025-12">December 2025</option>
-        </select>
+        <div class="flex items-center gap-2">
+          <!-- Month -->
+          <select id="monthSelect" class="btn btn-ghost">
+            <!-- Filled by JS (current month and a few neighbors) -->
+          </select>
 
-        <select id="regionSelect" class="border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
-          <option value="canada" selected>Canada</option>
-          <option value="pnw">PNW</option>
-          <option value="east">East</option>
-        </select>
+          <!-- Region -->
+          <select id="regionSelect" class="btn btn-ghost">
+            <option value="canada" selected>Canada</option>
+            <option value="pnw">PNW</option>
+            <option value="northeast">Northeast</option>
+          </select>
 
-        <button id="refreshBtn" type="button"
-                class="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 active:bg-indigo-800">
-          Refresh
-        </button>
-      </div>
-    </div>
-
-    <!-- Controls -->
-    <div class="mt-4 flex items-center gap-2 text-sm">
-      <div class="flex gap-2" id="viewBtns">
-        <button class="px-3 py-1.5 rounded bg-slate-100 text-slate-700" data-view="weekly">Weekly</button>
-        <button class="px-3 py-1.5 rounded bg-indigo-600 text-white" data-view="monthly">Monthly</button>
-        <button class="px-3 py-1.5 rounded bg-slate-100 text-slate-700" data-view="quarterly">Quarterly</button>
-        <button class="px-3 py-1.5 rounded bg-slate-100 text-slate-700" data-view="ytd">YTD</button>
-      </div>
-
-      <div class="ml-auto flex items-center gap-2">
-        <span class="text-slate-500">Rank by:</span>
-        <div id="rankBtns" class="flex gap-2">
-          <button class="px-2 py-1 rounded bg-green-100 text-green-700" data-rank="sales">Sales</button>
-          <button class="px-2 py-1 rounded bg-slate-100 text-slate-700" data-rank="closing">Closing Rate</button>
-          <button class="px-2 py-1 rounded bg-slate-100 text-slate-700" data-rank="ticket">Avg Ticket</button>
+          <!-- Refresh -->
+          <button id="refreshBtn" class="btn btn-active">Refresh</button>
         </div>
       </div>
-    </div>
-  </section>
 
-  <!-- KPIs -->
-  <section class="grid gap-4 md:grid-cols-3">
-    <div class="bg-white rounded-xl shadow p-5">
-      <div class="text-sm text-slate-500">Total Active Designers</div>
-      <div id="totalDesigners" class="mt-2 text-3xl font-bold tracking-tight">—</div>
-    </div>
+      <!-- View + Rank toggles -->
+      <div class="mt-4 flex items-center justify-between gap-4">
+        <div class="flex gap-2" id="viewGroup" role="tablist" aria-label="View range">
+          <button class="btn btn-ghost" data-view="weekly">Weekly</button>
+          <button class="btn btn-active" data-view="monthly">Monthly</button>
+          <button class="btn btn-ghost" data-view="quarterly">Quarterly</button>
+          <button class="btn btn-ghost" data-view="ytd">YTD</button>
+        </div>
 
-    <div class="bg-white rounded-xl shadow p-5">
-      <div class="text-sm text-slate-500">Avg Designer Performance (Sales)</div>
-      <div id="avgDesignerSales" class="mt-2 text-3xl font-bold tracking-tight">—</div>
-    </div>
+        <div class="flex items-center gap-2">
+          <span class="text-slate-600 text-sm">Rank by:</span>
+          <div id="rankGroup" class="flex gap-2" role="tablist" aria-label="Rank metric">
+            <button class="btn btn-active" data-rank="sales">Sales</button>
+            <button class="btn btn-ghost" data-rank="closing">Closing Rate</button>
+            <button class="btn btn-ghost" data-rank="ticket">Avg Ticket</button>
+          </div>
+        </div>
+      </div>
+    </section>
 
-    <div class="bg-white rounded-xl shadow p-5">
-      <div class="text-sm text-slate-500">Avg Sales Per Designer</div>
-      <div id="avgSalesPerDesigner" class="mt-2 text-3xl font-bold tracking-tight">—</div>
-    </div>
-  </section>
+    <!-- KPI Cards -->
+    <section class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      <!-- Total designers -->
+      <article class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+        <p class="text-slate-500 text-sm">Total Active Designers</p>
+        <p id="kpiDesigners" class="text-2xl font-semibold text-slate-900 mt-2"><span class="number-skel"></span></p>
+      </article>
 
-  <!-- Table -->
-  <section class="mt-6 bg-white rounded-xl shadow overflow-hidden">
-    <div class="p-5 border-b">
-      <h2 class="text-lg font-semibold">Regional Designer Performance Rankings</h2>
-      <p id="periodLabel" class="text-sm text-slate-500">Current Period:</p>
-    </div>
+      <!-- Avg Designer Performance (simple label) -->
+      <article class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+        <p class="text-slate-500 text-sm">Avg Designer Performance</p>
+        <p id="kpiPerf" class="text-2xl font-semibold text-slate-900 mt-2"><span class="number-skel"></span></p>
+      </article>
 
-    <div class="overflow-x-auto">
-      <table class="min-w-full text-sm">
-        <thead class="bg-slate-50 text-slate-600">
-        <tr>
-          <th class="px-4 py-3 text-left font-medium">Franchise</th>
-          <th class="px-4 py-3 text-left font-medium">Designers</th>
-          <th class="px-4 py-3 text-left font-medium">Monthly Sales</th>
-          <th class="px-4 py-3 text-left font-medium">Avg per Designer</th>
-          <th class="px-4 py-3 text-left font-medium">Closing Rate</th>
-          <th class="px-4 py-3 text-left font-medium">Avg Ticket</th>
-        </tr>
-        </thead>
-        <tbody id="franchiseTbody" class="divide-y">
-        <!-- rows injected -->
-        </tbody>
-      </table>
-    </div>
-  </section>
-</main>
+      <!-- Avg sales per designer -->
+      <article class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+        <p class="text-slate-500 text-sm">Avg Sales Per Designer</p>
+        <p id="kpiAvgSales" class="text-2xl font-semibold text-slate-900 mt-2"><span class="number-skel"></span></p>
+      </article>
+    </section>
 
-<script>
-(() => {
-  // Elements
-  const monthEl   = document.getElementById('monthSelect');
-  const regionEl  = document.getElementById('regionSelect');
-  const refreshEl = document.getElementById('refreshBtn');
-  const periodEl  = document.getElementById('periodLabel');
-  const totalDesignersEl = document.getElementById('totalDesigners');
-  const avgDesignerSalesEl = document.getElementById('avgDesignerSales');
-  const avgSalesPerDesignerEl = document.getElementById('avgSalesPerDesigner');
-  const tbodyEl = document.getElementById('franchiseTbody');
+    <!-- Rankings table -->
+    <section class="bg-white rounded-xl shadow-sm border border-slate-200">
+      <header class="p-5 border-b border-slate-200 flex items-center justify-between">
+        <div>
+          <h2 class="text-lg font-semibold text-slate-900">Regional Designer Performance Rankings</h2>
+          <p id="periodLabel" class="text-sm text-slate-500">Current Period</p>
+        </div>
+        <span id="rankBadge" class="chip bg-indigo-100 text-indigo-800">Ranked by Sales</span>
+      </header>
 
-  // Button groups
-  const viewBtns = document.getElementById('viewBtns');
-  const rankBtns = document.getElementById('rankBtns');
+      <div class="overflow-x-auto">
+        <table class="min-w-full text-sm">
+          <thead class="bg-slate-50 text-slate-600">
+            <tr>
+              <th class="text-left font-medium px-5 py-3">Rank</th>
+              <th class="text-left font-medium px-5 py-3">Designer</th>
+              <th class="text-left font-medium px-5 py-3">Franchise Location</th>
+              <th class="text-right font-medium px-5 py-3">Monthly Sales</th>
+              <th class="text-right font-medium px-5 py-3">Avg Ticket</th>
+              <th class="text-right font-medium px-5 py-3">Closing Rate</th>
+              <th class="text-right font-medium px-5 py-3">Appointments</th>
+              <th class="text-right font-medium px-5 py-3">Sales Closed</th>
+            </tr>
+          </thead>
+          <tbody id="rankBody" class="divide-y divide-slate-100">
+            <!-- Filled by JS -->
+            <tr class="odd:bg-white even:bg-slate-50">
+              <td class="px-5 py-3" colspan="8">
+                <div class="row-skel"></div>
+              </td>
+            </tr>
+            <tr class="odd:bg-white even:bg-slate-50">
+              <td class="px-5 py-3" colspan="8">
+                <div class="row-skel"></div>
+              </td>
+            </tr>
+            <tr class="odd:bg-white even:bg-slate-50">
+              <td class="px-5 py-3" colspan="8">
+                <div class="row-skel"></div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
 
-  // State
-  let state = {
-    view: 'monthly',   // weekly | monthly | quarterly | ytd  (visual only for now)
-    rankBy: 'sales',   // sales | closing | ticket
-    data: null,        // last fetched data (shaped object)
-    rows: []           // derived rows for table
-  };
+  <script>
+    // ------------------------------
+    // Small state store
+    // ------------------------------
+    const state = {
+      view: 'monthly',      // weekly | monthly | quarterly | ytd
+      rank: 'sales',        // sales | closing | ticket
+      month: '',            // YYYY-MM (derived from dropdown)
+      region: 'canada',     // region slug (dropdown)
+      data: null            // last API payload
+    };
 
-  const fmtCurrency = n => new Intl.NumberFormat('en-US', { style:'currency', currency:'USD', maximumFractionDigits:0 }).format(n || 0);
-  const fmtPct = n => `${(Number(n) || 0).toFixed(1)}%`;
+    // ------------------------------
+    // Helpers
+    // ------------------------------
+    const $ = (sel) => document.querySelector(sel);
+    const $$ = (sel) => Array.from(document.querySelectorAll(sel));
 
-  function setActive(groupEl, attr, value) {
-    [...groupEl.querySelectorAll('button')].forEach(btn => {
-      const isActive = btn.dataset[attr] === value;
-      btn.classList.toggle('bg-indigo-600', isActive && groupEl === viewBtns);
-      btn.classList.toggle('text-white', isActive && groupEl === viewBtns);
-      btn.classList.toggle('bg-slate-100', !isActive && groupEl === viewBtns);
-      btn.classList.toggle('text-slate-700', !isActive && groupEl === viewBtns);
+    function formatMoney(n) {
+      if (n == null || isNaN(n)) return '—';
+      return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(n);
+    }
+    function pct(n) {
+      if (n == null || isNaN(n)) return '—';
+      return `${(n * 100).toFixed(1)}%`;
+    }
 
-      if (groupEl === rankBtns) {
-        btn.classList.toggle('bg-green-100', isActive && value === 'sales');
-        btn.classList.toggle('text-green-700', isActive && value === 'sales');
-        btn.classList.toggle('bg-slate-100', !(isActive && value === 'sales'));
-        btn.classList.toggle('text-slate-700', !(isActive && value === 'sales'));
+    // Build the month select options (current ± 3 months)
+    function initMonthSelect() {
+      const sel = $('#monthSelect');
+      sel.innerHTML = '';
+      const now = new Date();
+      const months = [];
+      for (let i = -3; i <= 3; i++) {
+        const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
+        const value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        const label = d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+        months.push({ value, label });
       }
-    });
-  }
-
-  function setPeriodLabel(monthValue) {
-    try {
-      const [y, m] = monthValue.split('-').map(Number);
-      const d = new Date(y, m - 1, 1);
-      const pretty = d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-      periodEl.textContent = `Current Period: ${pretty}`;
-    } catch {
-      periodEl.textContent = `Current Period: ${monthValue}`;
+      months.forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m.value;
+        opt.textContent = m.label;
+        if (m.value === `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`) opt.selected = true;
+        sel.appendChild(opt);
+      });
+      state.month = sel.value;
+      updatePeriodLabel();
     }
-  }
 
-  function setLoading() {
-    totalDesignersEl.textContent = '…';
-    avgDesignerSalesEl.textContent = '…';
-    avgSalesPerDesignerEl.textContent = '…';
-    tbodyEl.innerHTML = `<tr><td class="px-4 py-4 text-slate-400" colspan="6">Loading…</td></tr>`;
-  }
-
-  function setEmpty() {
-    totalDesignersEl.textContent = '0';
-    avgDesignerSalesEl.textContent = '—';
-    avgSalesPerDesignerEl.textContent = '—';
-    tbodyEl.innerHTML = `<tr><td class="px-4 py-4 text-slate-400" colspan="6">No data.</td></tr>`;
-  }
-
-  function deriveRowsFromData(data) {
-    // data shape: { slug: { totals:{monthlySales, closingRate?, avgTicket?}, designers:[...] } }
-    const rows = Object.entries(data || {}).map(([slug, payload]) => {
-      const designers = payload?.designers || [];
-      const monthlySales = Number(payload?.totals?.monthlySales || 0);
-
-      // fallbacks if not present in payload
-      const closingRate = payload?.totals?.closingRate ?? 0; // expect percentage number (0-100)
-      const avgTicket = payload?.totals?.avgTicket ?? (designers.length ? monthlySales / designers.length : 0);
-
-      return {
-        slug,
-        designersCount: designers.length,
-        monthlySales,
-        avgPerDesigner: designers.length ? monthlySales / designers.length : 0,
-        closingRate,
-        avgTicket
-      };
-    });
-    return rows;
-  }
-
-  function sortRows(rows) {
-    const k = state.rankBy;
-    const key = k === 'sales' ? 'monthlySales'
-              : k === 'closing' ? 'closingRate'
-              : 'avgTicket';
-    rows.sort((a,b) => (b[key] || 0) - (a[key] || 0));
-    return rows;
-  }
-
-  function render() {
-    if (!state.rows.length) { setEmpty(); return; }
-
-    // KPIs
-    const totalDesigners = state.rows.reduce((sum, r) => sum + r.designersCount, 0);
-    const totalSales     = state.rows.reduce((sum, r) => sum + r.monthlySales, 0);
-    const avgDesignerPerf = state.rows
-      .filter(r => r.designersCount)
-      .reduce((sum, r, _, arr) => sum + (r.monthlySales / r.designersCount) / arr.length, 0);
-
-    totalDesignersEl.textContent = String(totalDesigners);
-    avgSalesPerDesignerEl.textContent = totalDesigners ? fmtCurrency(totalSales / totalDesigners) : '—';
-    avgDesignerSalesEl.textContent = state.rows.length ? fmtCurrency(avgDesignerPerf) : '—';
-
-    // Table
-    const sorted = sortRows([...state.rows]);
-    tbodyEl.innerHTML = sorted.map(r => `
-      <tr>
-        <td class="px-4 py-3 font-medium">${r.slug}</td>
-        <td class="px-4 py-3">${r.designersCount}</td>
-        <td class="px-4 py-3">${fmtCurrency(r.monthlySales)}</td>
-        <td class="px-4 py-3">${r.designersCount ? fmtCurrency(r.avgPerDesigner) : '—'}</td>
-        <td class="px-4 py-3">${r.closingRate ? fmtPct(r.closingRate) : '—'}</td>
-        <td class="px-4 py-3">${r.avgTicket ? fmtCurrency(r.avgTicket) : '—'}</td>
-      </tr>
-    `).join('');
-  }
-
-  async function load() {
-    const month = monthEl.value;
-    const region = regionEl.value.toLowerCase();
-
-    setActive(viewBtns, 'view', state.view);
-    setActive(rankBtns, 'rank', state.rankBy);
-    setPeriodLabel(month);
-    setLoading();
-
-    try {
-      // For now we always use the month value; view toggle is visual only
-      const url = `/api/metrics/region?region=${encodeURIComponent(region)}&month=${encodeURIComponent(month)}`;
-      const res = await fetch(url);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
-
-      state.data = data;
-      state.rows = deriveRowsFromData(data);
-      render();
-    } catch (e) {
-      console.error(e);
-      alert('Failed to load data. See console for details.');
-      setEmpty();
+    function updateActive(groupEl, activeAttr, value) {
+      groupEl.querySelectorAll('button').forEach(btn => {
+        const on = btn.dataset[activeAttr] === value;
+        btn.classList.toggle('btn-active', on);
+        btn.classList.toggle('btn-ghost', !on);
+        btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+      });
     }
-  }
 
-  // Events
-  refreshEl.addEventListener('click', load);
-  monthEl.addEventListener('change', load);
-  regionEl.addEventListener('change', load);
+    function updatePeriodLabel() {
+      // Simple label based on view + month
+      const monthLabel = new Date(state.month + '-01').toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+      let label = monthLabel;
+      if (state.view === 'weekly') label = `Week of ${monthLabel}`;
+      if (state.view === 'quarterly') label = `Quarter of ${monthLabel}`;
+      if (state.view === 'ytd') label = `Year-to-date of ${monthLabel}`;
+      $('#periodLabel').textContent = label;
+    }
 
-  viewBtns.addEventListener('click', (e) => {
-    const btn = e.target.closest('button[data-view]');
-    if (!btn) return;
-    state.view = btn.dataset.view;       // currently visual only
-    setActive(viewBtns, 'view', state.view);
-    // If later you implement weekly/quarterly/ytd APIs, call load() here with different params.
-  });
+    function setLoading(isLoading) {
+      $('#kpiDesigners').innerHTML = isLoading ? '<span class="number-skel"></span>' : '';
+      $('#kpiPerf').innerHTML       = isLoading ? '<span class="number-skel"></span>' : '';
+      $('#kpiAvgSales').innerHTML   = isLoading ? '<span class="number-skel"></span>' : '';
+      if (isLoading) {
+        $('#rankBody').innerHTML = `
+          <tr class="odd:bg-white even:bg-slate-50"><td class="px-5 py-3" colspan="8"><div class="row-skel"></div></td></tr>
+          <tr class="odd:bg-white even:bg-slate-50"><td class="px-5 py-3" colspan="8"><div class="row-skel"></div></td></tr>
+          <tr class="odd:bg-white even:bg-slate-50"><td class="px-5 py-3" colspan="8"><div class="row-skel"></div></td></tr>
+        `;
+      }
+    }
 
-  rankBtns.addEventListener('click', (e) => {
-    const btn = e.target.closest('button[data-rank]');
-    if (!btn) return;
-    state.rankBy = btn.dataset.rank;     // sales | closing | ticket
-    setActive(rankBtns, 'rank', state.rankBy);
-    render(); // resort only
-  });
+    // ------------------------------
+    // API + Data shaping
+    // ------------------------------
+    async function fetchRegionData() {
+      // For now, all views call the same endpoint with ?month=YYYY-MM
+      // (If you later add weekly/quarterly/ytd server logic, pass extra params like view=weekly)
+      const url = new URL('/api/metrics/region', window.location.origin);
+      url.searchParams.set('region', state.region);
+      url.searchParams.set('month', state.month);
 
-  // Initial
-  load();
-})();
-</script>
+      const res = await fetch(url.toString());
+      if (!res.ok) {
+        throw new Error(`API ${res.status}`);
+      }
+      return res.json();
+    }
+
+    function flattenDesigners(payload) {
+      // payload = { slug: { totals: {...}, designers: [...] }, ... }
+      const rows = [];
+      for (const [slug, block] of Object.entries(payload || {})) {
+        (block.designers || []).forEach(d => {
+          // expect d.monthlySales, appointments, salesClosed, avgTicket
+          const closingRate = d.appointments > 0 ? (d.salesClosed / d.appointments) : 0;
+          rows.push({
+            franchiseSlug: slug,
+            franchiseName: slug.replace(/-/g, ' '),
+            name: d.name,
+            monthlySales: d.monthlySales ?? 0,
+            avgTicket: d.avgTicket ?? 0,
+            appointments: d.appointments ?? 0,
+            salesClosed: d.salesClosed ?? 0,
+            closingRate
+          });
+        });
+      }
+      return rows;
+    }
+
+    function sortRows(rows) {
+      const metric = state.rank; // sales | closing | ticket
+      const key = metric === 'sales' ? 'monthlySales' : (metric === 'closing' ? 'closingRate' : 'avgTicket');
+      return rows.sort((a, b) => (b[key] ?? 0) - (a[key] ?? 0));
+    }
+
+    // ------------------------------
+    // Render
+    // ------------------------------
+    function renderKPIs(rows) {
+      const totalDesigners = rows.length;
+      const avgSales = totalDesigners ? rows.reduce((s, r) => s + (r.monthlySales ?? 0), 0) / totalDesigners : 0;
+
+      // Simple "performance label" based on rank metric
+      const perfLabel = totalDesigners
+        ? (avgSales >= 40000 ? 'Great' : avgSales >= 25000 ? 'Good' : 'Okay')
+        : '—';
+
+      $('#kpiDesigners').textContent = totalDesigners || '—';
+      $('#kpiPerf').textContent = perfLabel;
+      $('#kpiAvgSales').textContent = formatMoney(avgSales);
+    }
+
+    function renderTable(rows) {
+      const body = $('#rankBody');
+      if (!rows.length) {
+        body.innerHTML = `
+          <tr><td class="px-5 py-6 text-slate-500" colspan="8">No designers found for this period.</td></tr>
+        `;
+        return;
+      }
+
+      const metricLabel = state.rank === 'sales' ? 'Sales' : (state.rank === 'closing' ? 'Closing Rate' : 'Avg Ticket');
+      $('#rankBadge').textContent = `Ranked by ${metricLabel}`;
+
+      body.innerHTML = rows.map((r, i) => `
+        <tr class="odd:bg-white even:bg-slate-50">
+          <td class="px-5 py-3 text-slate-600">${i + 1}</td>
+          <td class="px-5 py-3 font-medium text-slate-900">${r.name}</td>
+          <td class="px-5 py-3 text-slate-700">${r.franchiseName}</td>
+          <td class="px-5 py-3 text-right">${formatMoney(r.monthlySales)}</td>
+          <td class="px-5 py-3 text-right">${formatMoney(r.avgTicket)}</td>
+          <td class="px-5 py-3 text-right">${pct(r.closingRate)}</td>
+          <td class="px-5 py-3 text-right">${r.appointments ?? 0}</td>
+          <td class="px-5 py-3 text-right">${r.salesClosed ?? 0}</td>
+        </tr>
+      `).join('');
+    }
+
+    async function loadAndRender() {
+      setLoading(true);
+      try {
+        const payload = await fetchRegionData();
+        state.data = payload;
+
+        const rows = sortRows(flattenDesigners(payload));
+        renderKPIs(rows);
+        renderTable(rows);
+      } catch (err) {
+        console.error(err);
+        $('#kpiDesigners').textContent = '—';
+        $('#kpiPerf').textContent = '—';
+        $('#kpiAvgSales').textContent = '—';
+        $('#rankBody').innerHTML = `
+          <tr><td class="px-5 py-6 text-rose-600" colspan="8">API error. Check route or env vars.</td></tr>
+        `;
+      } finally {
+        // nothing
+      }
+    }
+
+    // ------------------------------
+    // Event wiring
+    // ------------------------------
+    function wireEvents() {
+      // Month / Region / Refresh
+      $('#monthSelect').addEventListener('change', () => {
+        state.month = $('#monthSelect').value;
+        updatePeriodLabel();
+        loadAndRender();
+      });
+
+      $('#regionSelect').addEventListener('change', () => {
+        state.region = $('#regionSelect').value;
+        $('#regionLabel').textContent = `${$('#regionSelect').selectedOptions[0].text} Region`;
+        loadAndRender();
+      });
+
+      $('#refreshBtn').addEventListener('click', () => loadAndRender());
+
+      // View group
+      const viewGroup = $('#viewGroup');
+      viewGroup.addEventListener('click', (e) => {
+        const btn = e.target.closest('button[data-view]');
+        if (!btn) return;
+        state.view = btn.dataset.view;
+        updateActive(viewGroup, 'view', state.view);
+        updatePeriodLabel();
+        // For now, server logic is monthly; still reload so future view support works seamlessly
+        loadAndRender();
+      });
+
+      // Rank group
+      const rankGroup = $('#rankGroup');
+      rankGroup.addEventListener('click', (e) => {
+        const btn = e.target.closest('button[data-rank]');
+        if (!btn) return;
+        state.rank = btn.dataset.rank;
+        updateActive(rankGroup, 'rank', state.rank);
+
+        // Re-sort existing rows (no extra API call needed)
+        if (state.data) {
+          const rows = sortRows(flattenDesigners(state.data));
+          renderKPIs(rows);
+          renderTable(rows);
+        } else {
+          loadAndRender();
+        }
+      });
+    }
+
+    // ------------------------------
+    // Init
+    // ------------------------------
+    initMonthSelect();
+    wireEvents();
+    updateActive($('#viewGroup'), 'view', state.view);
+    updateActive($('#rankGroup'), 'rank', state.rank);
+    $('#regionLabel').textContent = `${$('#regionSelect').selectedOptions[0].text} Region`;
+    loadAndRender();
+  </script>
 </body>
 </html>
