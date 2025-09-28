@@ -1,20 +1,26 @@
-// /api/metrics/region/[region].js
-import { kv } from "@vercel/kv";
+// api/metrics/region/[region].js
+import { createClient } from "@supabase/supabase-js";
+
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE
+);
 
 export default async function handler(req, res) {
-  const region = (req.query.region || "").toUpperCase();
-  const month = req.query.month || "";
-  if (!region) return res.status(400).json({ error: "Missing region" });
+  const { region } = req.query;
+  const { month } = req.query;
+  if (!region) return res.status(400).json({ error: "region is required" });
+  if (!month) return res.status(400).json({ error: "month is required (e.g. 2025-09)" });
 
-  if (month) {
-    const doc = await kv.get(`region:${region}:${month}`);
-    return res.status(200).json(doc || { region, month, totals: { sales: 0 }, franchises: {} });
-  }
+  const { data, error } = await supabase
+    .from("metrics")
+    .select("franchise_slug, payload")
+    .eq("region", region)
+    .eq("month", month);
 
-  const months = ["2025-09", "2025-08", "2025-07"];
-  const out = {};
-  for (const m of months) {
-    out[m] = (await kv.get(`region:${region}:${m}`)) || { region, month: m, totals: { sales: 0 }, franchises: {} };
-  }
-  return res.status(200).json(out);
+  if (error) return res.status(500).json({ error: error.message });
+
+  // Shape to { [franchise_slug]: payload }
+  const shaped = Object.fromEntries((data || []).map(r => [r.franchise_slug, r.payload]));
+  return res.status(200).json(shaped);
 }
