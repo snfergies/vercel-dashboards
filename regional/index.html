@@ -7,9 +7,12 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body { box-sizing: border-box; }
+    .btn { @apply px-4 py-2 rounded-lg font-medium; }
+    .btn-solid { @apply text-white bg-indigo-600 hover:bg-indigo-700; }
+    .btn-ghost { @apply bg-gray-200 text-gray-700 hover:bg-gray-300; }
+    .chip { @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-medium; }
   </style>
 </head>
-
 <body class="bg-gradient-to-br from-indigo-50 to-purple-100 min-h-screen">
   <div class="container mx-auto px-4 py-6">
     <!-- Header -->
@@ -31,29 +34,29 @@
 
       <!-- View Toggle -->
       <div class="flex space-x-2 mb-4">
-        <button id="weeklyView" class="px-4 py-2 bg-indigo-600 text-white rounded-lg font-medium">Weekly</button>
-        <button id="monthlyView" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300">Monthly</button>
-        <button id="quarterlyView" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300">Quarterly</button>
-        <button id="ytdView" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300">YTD</button>
+        <button id="weeklyView"    class="btn btn-solid">Weekly</button>
+        <button id="monthlyView"   class="btn btn-ghost">Monthly</button>
+        <button id="quarterlyView" class="btn btn-ghost">Quarterly</button>
+        <button id="ytdView"       class="btn btn-ghost">YTD</button>
       </div>
 
-      <!-- Ranking Criteria Toggle -->
-      <div class="flex space-x-2">
+      <!-- Ranking Criteria -->
+      <div class="flex items-center space-x-2">
         <span class="text-sm font-medium text-gray-700 py-2">Rank by:</span>
-        <button id="rankBySales" class="px-4 py-2 bg-green-600 text-white rounded-lg font-medium text-sm">Sales</button>
-        <button id="rankByClosing" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-medium text-sm hover:bg-gray-300">Closing Rate</button>
-        <button id="rankByTicket" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-medium text-sm hover:bg-gray-300">Avg Ticket</button>
+        <button id="rankBySales"   class="btn bg-green-600 text-white text-sm">Sales</button>
+        <button id="rankByClosing" class="btn btn-ghost text-sm">Closing Rate</button>
+        <button id="rankByTicket"  class="btn btn-ghost text-sm">Avg Ticket</button>
       </div>
     </div>
 
-    <!-- Designer-Focused Overview Cards -->
+    <!-- Overview Cards -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
       <div class="bg-white rounded-lg shadow-lg p-6">
         <div class="flex items-center justify-between">
           <div>
             <p class="text-sm font-medium text-gray-600">Total Active Designers</p>
             <p class="text-2xl font-bold text-indigo-600" id="totalDesigners">--</p>
-            <p class="text-sm text-green-600" id="deltaDesigners"></p>
+            <p class="text-sm text-green-600" id="designersDelta">&nbsp;</p>
           </div>
           <div class="p-3 bg-indigo-100 rounded-full">
             <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -68,7 +71,7 @@
           <div>
             <p class="text-sm font-medium text-gray-600">Avg Designer Performance</p>
             <p class="text-2xl font-bold text-green-600" id="avgDesignerPerformance">--</p>
-            <p class="text-sm text-green-600" id="deltaPerformance"></p>
+            <p class="text-sm text-green-600" id="avgPerfDelta">&nbsp;</p>
           </div>
           <div class="p-3 bg-green-100 rounded-full">
             <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -83,7 +86,7 @@
           <div>
             <p class="text-sm font-medium text-gray-600">Avg Sales Per Designer</p>
             <p class="text-2xl font-bold text-purple-600" id="avgSalesPerDesigner">--</p>
-            <p class="text-sm text-green-600" id="deltaAvgSales"></p>
+            <p class="text-sm text-green-600" id="avgSalesDelta">&nbsp;</p>
           </div>
           <div class="p-3 bg-purple-100 rounded-full">
             <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -94,24 +97,24 @@
       </div>
     </div>
 
-    <!-- Average Regional Performance Tracking -->
+    <!-- Regional Performance Tracking -->
     <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
       <h2 class="text-xl font-bold text-gray-800 mb-4">Average Regional Performance Tracking</h2>
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div class="bg-green-50 p-4 rounded-lg">
           <h3 class="font-semibold text-green-800 mb-2">Average Conversion Rate</h3>
           <p class="text-2xl font-bold text-green-600" id="avgConversionRate">--</p>
-          <div class="mt-2 text-sm text-green-600">Previous Month: —</div>
+          <div class="text-sm text-green-600">Previous Month: <span id="prevConv">—</span></div>
         </div>
         <div class="bg-purple-50 p-4 rounded-lg">
           <h3 class="font-semibold text-purple-800 mb-2">Average Ticket Value</h3>
           <p class="text-2xl font-bold text-purple-600" id="avgTicketValue">--</p>
-          <div class="mt-2 text-sm text-purple-600">Previous Month: —</div>
+          <div class="text-sm text-purple-600">Previous Month: <span id="prevTicket">—</span></div>
         </div>
         <div class="bg-blue-50 p-4 rounded-lg">
           <h3 class="font-semibold text-blue-800 mb-2">Average Appointments</h3>
           <p class="text-2xl font-bold text-blue-600" id="avgAppointments">--</p>
-          <div class="mt-2 text-sm text-blue-600">Per designer/month</div>
+          <div class="text-sm text-blue-600">Per designer/month</div>
         </div>
       </div>
     </div>
@@ -125,15 +128,9 @@
             <p class="text-gray-600">Current Period: <span id="currentPeriod">Week of September 2-8, 2025</span></p>
           </div>
           <div class="flex space-x-3">
-            <button id="manageFranchisesBtn" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium">
-              Manage Locations
-            </button>
-            <button id="filterDesignersBtn" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-medium">
-              Filter Designers
-            </button>
-            <button id="exportDataBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium">
-              Export Data
-            </button>
+            <button id="manageFranchisesBtn" class="btn bg-green-600 hover:bg-green-700 text-white">Manage Locations</button>
+            <button id="filterDesignersBtn" class="btn bg-purple-600 hover:bg-purple-700 text-white">Filter Designers</button>
+            <button id="exportDataBtn" class="btn bg-blue-600 hover:bg-blue-700 text-white">Export Data</button>
           </div>
         </div>
       </div>
@@ -151,684 +148,271 @@
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
-          <tbody id="designerTableBody" class="bg-white divide-y divide-gray-200"></tbody>
+          <tbody id="designerTableBody" class="bg-white divide-y divide-gray-200">
+          </tbody>
         </table>
       </div>
     </div>
-
-    <!-- Top Designers -->
-    <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
-      <h3 class="text-lg font-bold text-gray-800 mb-4">⭐ Top Regional Designers</h3>
-      <div class="space-y-4" id="topDesigners"></div>
-    </div>
   </div>
 
-  <!-- Franchise Management Modal (UI unchanged) -->
-  <div id="franchiseManagementModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
-    <div class="bg-white rounded-lg p-6 w-full max-w-4xl mx-4 max-h-screen overflow-y-auto">
-      <div class="flex justify-between items-center mb-6">
-        <h3 class="text-xl font-bold text-gray-800">Manage Franchise Locations</h3>
-        <button id="closeFranchiseManagement" class="text-gray-400 hover:text-gray-600">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-          </svg>
-        </button>
-      </div>
-
-      <!-- Add New Franchise Section -->
-      <div class="bg-green-50 rounded-lg p-6 mb-6">
-        <h4 class="text-lg font-semibold text-green-800 mb-4">Add New Franchise Location</h4>
-        <form id="addFranchiseForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Location Name</label>
-            <input type="text" id="newFranchiseName" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500" placeholder="e.g., Kirkland Commons">
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">City, State</label>
-            <input type="text" id="newFranchiseLocation" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500" placeholder="e.g., Kirkland, WA">
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Monthly Goal ($)</label>
-            <input type="number" id="newFranchiseGoal" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500" placeholder="120000">
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Number of Designers</label>
-            <input type="number" id="newFranchiseDesigners" required min="1" max="10" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500" placeholder="3">
-          </div>
-          <div class="md:col-span-2">
-            <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-medium">
-              Add Franchise Location
-            </button>
-          </div>
-        </form>
-      </div>
-
-      <!-- Existing Franchises List -->
-      <div class="bg-gray-50 rounded-lg p-6">
-        <h4 class="text-lg font-semibold text-gray-800 mb-4">Current Franchise Locations</h4>
-        <div class="overflow-x-auto">
-          <table class="w-full">
-            <thead class="bg-white">
-              <tr>
-                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Location</th>
-                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">City, State</th>
-                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Monthly Sales</th>
-                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Monthly Goal</th>
-                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Designers</th>
-                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Performance</th>
-                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
-              </tr>
-            </thead>
-            <tbody id="franchiseManagementTableBody" class="bg-white divide-y divide-gray-200"></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Simple modals reused from your original (deleted confirmation etc.) -->
-  <div id="deleteConfirmationModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
-    <div class="bg-white rounded-lg p-6 w-full max-w-md mx-4">
-      <h3 class="text-lg font-bold text-gray-800 mb-4">Confirm Deletion</h3>
-      <p class="text-gray-600 mb-6">Are you sure you want to delete <span id="deleteLocationName" class="font-semibold"></span>?</p>
-      <div class="flex justify-end space-x-3">
-        <button id="cancelDelete" class="px-4 py-2 text-gray-600 hover:text-gray-800">Cancel</button>
-        <button id="confirmDelete" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg">Delete Location</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Filter + Drilldown (kept same IDs so existing handlers still work) -->
-  <div id="designerFilterModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
-    <div class="bg-white rounded-lg p-6 w-full max-w-md mx-4">
-      <h3 class="text-lg font-bold text-gray-800 mb-4">Filter Designers</h3>
-      <form id="designerFilterForm">
-        <div class="mb-4">
-          <label class="block text-sm font-medium text-gray-700 mb-2">Performance Level</label>
-          <select id="performanceFilter" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
-            <option value="all">All Designers</option>
-            <option value="exceeding">Exceeding Goals (95%+)</option>
-            <option value="meeting">Meeting Goals (80-95%)</option>
-            <option value="developing">Developing (60-80%)</option>
-            <option value="needs-support">Needs Support (&lt;60%)</option>
-          </select>
-        </div>
-        <div class="mb-4">
-          <label class="block text-sm font-medium text-gray-700 mb-2">Franchise Location</label>
-          <select id="franchiseFilter" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
-            <option value="all">All Locations</option>
-          </select>
-        </div>
-        <div class="mb-4">
-          <label class="block text-sm font-medium text-gray-700 mb-2">Sales Range</label>
-          <div class="grid grid-cols-2 gap-3">
-            <input type="number" id="minSales" placeholder="Min Sales" class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
-            <input type="number" id="maxSales" placeholder="Max Sales" class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
-          </div>
-        </div>
-        <div class="flex justify-end space-x-3">
-          <button type="button" id="cancelDesignerFilter" class="px-4 py-2 text-gray-600 hover:text-gray-800">Cancel</button>
-          <button type="button" id="clearFilters" class="px-4 py-2 text-purple-600 hover:text-purple-800">Clear All</button>
-          <button type="submit" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg">Apply Filters</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <div id="drillDownModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
-    <div class="bg-white rounded-lg p-6 w-full max-w-4xl mx-4 max-h-screen overflow-y-auto">
-      <div class="flex justify-between items-center mb-4">
-        <h3 class="text-lg font-bold text-gray-800">Franchise Detail View</h3>
-        <button id="closeDrillDown" class="text-gray-400 hover:text-gray-600">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-          </svg>
-        </button>
-      </div>
-      <div id="drillDownContent"></div>
-    </div>
-  </div>
+  <!-- Toast -->
+  <div id="toast" class="fixed bottom-4 right-4 hidden bg-red-600 text-white px-4 py-2 rounded-lg shadow-lg"></div>
 
   <script>
-    /* =========================
-       A) Small helper/util block
-       ========================= */
-    const API_BASE = '';              // same-origin API
-    const DEFAULT_REGION = 'PNW';     // adjust to your region tag if needed
+    // ======== CONFIG ========
+    // IMPORTANT: this matches your repo path: api/metrics/region/region.js
+    const METRICS_ENDPOINT = '/api/metrics/region/region';
 
-    const toSlug = (s) =>
-      s.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
-    const slugToTitle = (slug) =>
-      slug.replace(/-/g,' ').replace(/\b\w/g, c => c.toUpperCase());
-
-    /* ======================================
-       B) State (populated from your API)
-       ====================================== */
-    let franchises = [];         // filled by loadRegionData()
+    // Defaults / UI state
     let currentView = 'weekly';
     let currentMonth = '2025-09';
-    let currentRankingCriteria = 'sales';
-    let franchiseIdCounter = 1;
-    let franchiseToDelete = null;
+    let currentRanking = 'sales'; // 'sales' | 'closing' | 'ticket'
+    let currentRegion = 'canada';
 
-    const safeNumber = (v, d=0) => Number.isFinite(v) ? v : d;
-
-    /* =======================================================
-       C) Fetch live data from /api/metrics/region and shape it
-       ======================================================= */
-    async function loadRegionData() {
-      const url = `${API_BASE}/api/metrics/region?region=${encodeURIComponent(DEFAULT_REGION)}&month=${encodeURIComponent(currentMonth)}`;
-      let shaped = null;
-
-      try {
-        const res = await fetch(url, { headers: { 'Accept': 'application/json' }});
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json(); // shape: { "<franchise-slug>": { designers: [...], totals: {...} } }
-        shaped = shapeRegionPayloadToFranchises(data);
-      } catch (err) {
-        console.warn('Falling back to sample data. Reason:', err);
-        shaped = sampleFranchises(); // fallback if API not ready
-      }
-
-      franchises = shaped;
-      franchiseIdCounter = (Math.max(0, ...franchises.map(f => f.id)) || 0) + 1;
-
-      // Render everything
-      updateDesignerMetrics();
-      renderDesignerTable();
-      renderTopPerformers();
-      renderFranchiseManagementTable();
-      updateFranchiseFilterOptions();
+    // ======== UTILS ========
+    function $(id) { return document.getElementById(id); }
+    function money(n){ return n == null ? '--' : '$' + Math.round(n).toLocaleString(); }
+    function pct(n){ return n == null ? '--' : n.toFixed(1) + '%'; }
+    function showToast(msg){
+      const t = $('toast');
+      t.textContent = msg;
+      t.classList.remove('hidden');
+      setTimeout(()=>t.classList.add('hidden'), 3500);
     }
 
-    // Convert API payload to the UI-friendly array used by the dashboard
-    function shapeRegionPayloadToFranchises(payload) {
-      const out = [];
-      let id = 1;
+    // ======== EVENT LISTENERS ========
+    function setupEventListeners() {
+      // View toggles
+      $('weeklyView').addEventListener('click', () => switchView('weekly'));
+      $('monthlyView').addEventListener('click', () => switchView('monthly'));
+      $('quarterlyView').addEventListener('click', () => switchView('quarterly'));
+      $('ytdView').addEventListener('click', () => switchView('ytd'));
 
-      Object.entries(payload || {}).forEach(([slug, body]) => {
-        const designers = (body?.designers || []).map(d => ({
-          name: d.name || 'Designer',
-          sales: safeNumber(d.monthlySales),
-          goal: safeNumber(d.goal, 0),
-          avgTicket: safeNumber(d.avgTicket, 0),
-          conversionRate: safeNumber(d.conversionRate, 0),
-          experience: d.experience || '',
-          specialty: d.specialty || ''
-        }));
+      // Ranking toggles
+      $('rankBySales').addEventListener('click',   () => switchRanking('sales'));
+      $('rankByClosing').addEventListener('click', () => switchRanking('closing'));
+      $('rankByTicket').addEventListener('click',  () => switchRanking('ticket'));
 
-        const monthlySales = body?.totals?.monthlySales ??
-                             designers.reduce((s, d) => s + safeNumber(d.sales), 0);
-
-        out.push({
-          id: id++,
-          name: slugToTitle(slug),
-          location: body?.location || '',
-          monthlySales,
-          monthlyGoal: safeNumber(body?.monthlyGoal, 0),
-          avgTicket: Math.round(designers.reduce((s, d) => s + safeNumber(d.avgTicket), 0) / Math.max(1, designers.length)),
-          conversionRate: Math.round(designers.reduce((s, d) => s + safeNumber(d.conversionRate), 0) / Math.max(1, designers.length) * 10) / 10,
-          designerCount: designers.length,
-          topPerformer: [...designers].sort((a,b) => b.sales - a.sales)[0]?.name || '',
-          trend: 'stable',
-          designers
-        });
+      // Month dropdown
+      $('monthSelect').addEventListener('change', (e) => {
+        currentMonth = e.target.value;
+        fetchRegionalData().catch(()=>{});
       });
 
-      return out;
+      // Basic button stubs
+      $('manageFranchisesBtn').addEventListener('click', () => showToast('Manage Locations coming soon.'));
+      $('filterDesignersBtn').addEventListener('click', () => showToast('Filter Designers coming soon.'));
+      $('exportDataBtn').addEventListener('click', () => exportCSV());
     }
 
-    // Simple curated sample (used when API has no rows yet)
-    function sampleFranchises() {
-      return [
-        {
-          id: 1,
-          name: "Downtown Seattle",
-          location: "Seattle, WA",
-          monthlySales: 84100,
-          monthlyGoal: 140000,
-          avgTicket: 1625,
-          conversionRate: 53.3,
-          designerCount: 2,
-          topPerformer: "Sarah Johnson",
-          trend: "up",
-          designers: [
-            { name: "Sarah Johnson", sales: 45200, goal: 50000, avgTicket: 2100, conversionRate: 72, experience: "5 years", specialty: "Luxury Kitchens" },
-            { name: "Mike Chen",     sales: 38900, goal: 45000, avgTicket: 1950, conversionRate: 65, experience: "3 years", specialty: "Modern Design" }
-          ]
+    function setActiveViewButton(view){
+      ['weekly','monthly','quarterly','ytd'].forEach(v=>{
+        const id = v + 'View';
+        const el = $(id);
+        if (!el) return;
+        el.className = (v === view) ? 'btn btn-solid' : 'btn btn-ghost';
+      });
+    }
+
+    function setActiveRankButton(rank){
+      const ids = { sales: 'rankBySales', closing: 'rankByClosing', ticket: 'rankByTicket' };
+      Object.entries(ids).forEach(([key, id])=>{
+        const el = $(id);
+        if (!el) return;
+        if (key === rank) {
+          el.className = 'btn bg-green-600 text-white text-sm';
+        } else {
+          el.className = 'btn btn-ghost text-sm';
         }
-      ];
-    }
-
-    /* ==========================
-       D) Everything you already had
-       (rendering + interactions)
-       ========================== */
-
-    // global filters
-    let designerFilters = { performance: 'all', franchise: 'all', minSales: null, maxSales: null };
-
-    function updateDesignerMetrics() {
-      const allDesigners = franchises.flatMap(f => f.designers);
-      const totalDesigners = allDesigners.length;
-      const totalSales = allDesigners.reduce((sum, d) => sum + safeNumber(d.sales), 0);
-      const avgSalesPerDesigner = totalSales / Math.max(1, totalDesigners);
-      const avgPerformance = allDesigners.reduce((sum, d) => sum + (safeNumber(d.sales) / Math.max(1, safeNumber(d.goal)))), 0);
-
-      // conversion/ticket from designers
-      const avgConversionRate = allDesigners.reduce((s,d)=> s + safeNumber(d.conversionRate),0) / Math.max(1,totalDesigners);
-      const avgTicketValue    = allDesigners.reduce((s,d)=> s + safeNumber(d.avgTicket),0) / Math.max(1,totalDesigners);
-      const avgAppointments   = 18.3; // placeholder as before
-
-      document.getElementById('regionSummary').textContent = `Pacific Northwest Region - ${franchises.length} Franchise Locations`;
-      document.getElementById('totalDesigners').textContent = totalDesigners;
-      document.getElementById('avgDesignerPerformance').textContent = (avgPerformance * 100).toFixed(1) + '%';
-      document.getElementById('avgSalesPerDesigner').textContent = '$' + Math.round(avgSalesPerDesigner).toLocaleString();
-
-      document.getElementById('avgConversionRate').textContent = isFinite(avgConversionRate) ? avgConversionRate.toFixed(1) + '%' : '--';
-      document.getElementById('avgTicketValue').textContent    = isFinite(avgTicketValue)    ? '$' + Math.round(avgTicketValue).toLocaleString() : '--';
-      document.getElementById('avgAppointments').textContent   = avgAppointments.toFixed(1);
-    }
-
-    function renderDesignerTable() {
-      const tbody = document.getElementById('designerTableBody');
-      tbody.innerHTML = '';
-
-      let allDesigners = [];
-      franchises.forEach(franchise => {
-        franchise.designers.forEach(designer => {
-          allDesigners.push({
-            ...designer,
-            franchiseName: franchise.name,
-            franchiseLocation: franchise.location,
-            franchiseId: franchise.id
-          });
-        });
-      });
-
-      let filtered = allDesigners.filter(designer => {
-        const goalPercentage = (safeNumber(designer.sales) / Math.max(1, safeNumber(designer.goal))) * 100;
-
-        if (designerFilters.performance !== 'all') {
-          if (designerFilters.performance === 'exceeding' && goalPercentage < 95) return false;
-          if (designerFilters.performance === 'meeting'   && (goalPercentage < 80 || goalPercentage >= 95)) return false;
-          if (designerFilters.performance === 'developing'&& (goalPercentage < 60 || goalPercentage >= 80)) return false;
-          if (designerFilters.performance === 'needs-support' && goalPercentage >= 60) return false;
-        }
-        if (designerFilters.franchise !== 'all' && designer.franchiseName !== designerFilters.franchise) return false;
-        if (designerFilters.minSales && safeNumber(designer.sales) < designerFilters.minSales) return false;
-        if (designerFilters.maxSales && safeNumber(designer.sales) > designerFilters.maxSales) return false;
-        return true;
-      });
-
-      filtered.sort((a, b) => {
-        if (currentRankingCriteria === 'sales')   return b.sales - a.sales;
-        if (currentRankingCriteria === 'closing') return (b.conversionRate||0) - (a.conversionRate||0);
-        if (currentRankingCriteria === 'ticket')  return (b.avgTicket||0) - (a.avgTicket||0);
-        return b.sales - a.sales;
-      });
-
-      filtered.forEach((designer, index) => {
-        const rank = index + 1;
-        const goalPct = ((safeNumber(designer.sales) / Math.max(1, safeNumber(designer.goal))) * 100).toFixed(1);
-
-        const getRankBadge = (rank) => {
-          if (rank === 1) return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-          if (rank <= 5)  return 'bg-green-100 text-green-800 border-green-200';
-          if (rank <= 15) return 'bg-blue-100 text-blue-800 border-blue-200';
-          return 'bg-gray-100 text-gray-800 border-gray-200';
-        };
-        const getPerformanceIndicator = (percentage) => {
-          if (percentage >= 95) return '🌟';
-          if (percentage >= 80) return '✅';
-          if (percentage >= 60) return '⚠️';
-          return '🔴';
-        };
-
-        const row = document.createElement('tr');
-        row.className = 'hover:bg-gray-50 cursor-pointer';
-        row.dataset.designerId = `${designer.franchiseId}-${designer.name}`;
-        row.innerHTML = `
-          <td class="px-6 py-4 whitespace-nowrap">
-            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${getRankBadge(rank)}">#${rank}</span>
-          </td>
-          <td class="px-6 py-4 whitespace-nowrap">
-            <div class="font-medium text-gray-900">${designer.name}</div>
-          </td>
-          <td class="px-6 py-4 whitespace-nowrap">
-            <div class="font-medium text-gray-900">${designer.franchiseName}</div>
-            <div class="text-sm text-gray-500">${designer.franchiseLocation || ''}</div>
-          </td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">$${safeNumber(designer.sales).toLocaleString()}</td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">$${safeNumber(designer.avgTicket)}</td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${safeNumber(designer.conversionRate)}%</td>
-          <td class="px-6 py-4 whitespace-nowrap text-center"><span class="text-lg">${getPerformanceIndicator(+goalPct)}</span></td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-            <button class="designer-detail-btn text-indigo-600 hover:text-indigo-900" data-designer-id="${designer.franchiseId}-${designer.name}">View Profile</button>
-          </td>
-        `;
-        tbody.appendChild(row);
-      });
-
-      document.querySelectorAll('.designer-detail-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          const id = e.currentTarget.dataset.designerId;
-          showDesignerDetail(id);
-        });
       });
     }
 
-    function renderTopPerformers() {
-      const wrap = document.getElementById('topDesigners');
-      const all = franchises.flatMap(f => f.designers.map(d => ({ ...d, franchise: f.name })));
-
-      all.sort((a,b) => {
-        if (currentRankingCriteria === 'sales')   return b.sales - a.sales;
-        if (currentRankingCriteria === 'closing') return (b.conversionRate||0) - (a.conversionRate||0);
-        if (currentRankingCriteria === 'ticket')  return (b.avgTicket||0) - (a.avgTicket||0);
-        return b.sales - a.sales;
-      });
-
-      const top = all.slice(0,5);
-      wrap.innerHTML = '';
-      top.forEach((d, i) => {
-        const container = document.createElement('div');
-        container.className = 'flex items-center justify-between p-3 bg-gray-50 rounded-lg';
-        const medal = i === 0 ? '🏆' : i === 1 ? '🥈' : i === 2 ? '🥉' : '⭐';
-
-        const mainVal =
-          currentRankingCriteria === 'closing' ? `${safeNumber(d.conversionRate)}%` :
-          currentRankingCriteria === 'ticket'  ? `$${safeNumber(d.avgTicket)}` :
-                                                 `$${safeNumber(d.sales).toLocaleString()}`;
-        const secondary =
-          currentRankingCriteria === 'sales'   ? `$${safeNumber(d.avgTicket)} avg ticket` :
-          currentRankingCriteria === 'closing' ? `$${safeNumber(d.sales).toLocaleString()} sales` :
-                                                 `${safeNumber(d.conversionRate)}% closing rate`;
-
-        container.innerHTML = `
-          <div class="flex items-center space-x-3">
-            <span class="text-lg">${medal}</span>
-            <div>
-              <div class="font-medium text-gray-900">${d.name}</div>
-              <div class="text-sm text-gray-500">${d.franchise} ${d.specialty ? '• ' + d.specialty : ''}</div>
-            </div>
-          </div>
-          <div class="text-right">
-            <div class="font-semibold text-gray-900">${mainVal}</div>
-            <div class="text-sm text-green-600">${secondary}</div>
-          </div>
-        `;
-        wrap.appendChild(container);
-      });
-    }
-
-    // (Filter, modals, manage table) — unchanged behavior, minimal implementations:
-
-    function renderFranchiseManagementTable() {
-      const tbody = document.getElementById('franchiseManagementTableBody');
-      tbody.innerHTML = '';
-      franchises.forEach(f => {
-        const pct = ((safeNumber(f.monthlySales) / Math.max(1, safeNumber(f.monthlyGoal))) * 100).toFixed(1);
-        const color = pct >= 90 ? 'text-green-600' : pct >= 75 ? 'text-yellow-600' : 'text-red-600';
-        const perf  = pct >= 90 ? 'Excellent' : pct >= 75 ? 'Good' : 'Needs Focus';
-
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td class="px-4 py-3 font-medium text-gray-900">${f.name}</td>
-          <td class="px-4 py-3 text-gray-900">${f.location || ''}</td>
-          <td class="px-4 py-3 text-gray-900">$${safeNumber(f.monthlySales).toLocaleString()}</td>
-          <td class="px-4 py-3 text-gray-900">$${safeNumber(f.monthlyGoal).toLocaleString()}</td>
-          <td class="px-4 py-3 text-gray-900">${f.designers.length}</td>
-          <td class="px-4 py-3 ${color} font-medium">${perf} (${pct}%)</td>
-          <td class="px-4 py-3">
-            <button class="delete-franchise-btn text-red-600 hover:text-red-800 font-medium" data-franchise-id="${f.id}">Delete</button>
-          </td>
-        `;
-        tbody.appendChild(tr);
-      });
-
-      document.querySelectorAll('.delete-franchise-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          const id = parseInt(e.currentTarget.dataset.franchiseId, 10);
-          const f = franchises.find(x => x.id === id);
-          if (f) {
-            franchiseToDelete = id;
-            document.getElementById('deleteLocationName').textContent = f.name;
-            showModal('deleteConfirmationModal');
-          }
-        });
-      });
-    }
-
-    function updateFranchiseFilterOptions() {
-      const sel = document.getElementById('franchiseFilter');
-      const current = sel.value;
-      sel.innerHTML = '<option value="all">All Locations</option>';
-      franchises.forEach(f => {
-        const opt = document.createElement('option');
-        opt.value = f.name;
-        opt.textContent = f.name;
-        sel.appendChild(opt);
-      });
-      if (current !== 'all' && franchises.some(f => f.name === current)) sel.value = current;
-    }
-
-    function showDesignerDetail(designerId) {
-      const [fid, ...nameParts] = designerId.split('-');
-      const name = nameParts.join('-');
-      const franchise = franchises.find(f => f.id === parseInt(fid,10));
-      const designer = franchise?.designers.find(d => d.name === name);
-      if (!designer) return;
-
-      const goalPct = ((safeNumber(designer.sales) / Math.max(1, safeNumber(designer.goal))) * 100).toFixed(1);
-      document.getElementById('drillDownContent').innerHTML = `
-        <div class="mb-6">
-          <h4 class="text-xl font-bold text-gray-800">${designer.name}</h4>
-          <p class="text-gray-600">${franchise.name} • ${designer.experience || ''} • ${designer.specialty || ''}</p>
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          <div class="bg-blue-50 p-4 rounded-lg">
-            <h5 class="font-semibold text-blue-800">Monthly Sales</h5>
-            <p class="text-xl font-bold text-blue-600">$${safeNumber(designer.sales).toLocaleString()}</p>
-            <p class="text-sm text-blue-600">${goalPct}% of goal</p>
-          </div>
-          <div class="bg-green-50 p-4 rounded-lg">
-            <h5 class="font-semibold text-green-800">Conversion Rate</h5>
-            <p class="text-xl font-bold text-green-600">${safeNumber(designer.conversionRate)}%</p>
-          </div>
-          <div class="bg-purple-50 p-4 rounded-lg">
-            <h5 class="font-semibold text-purple-800">Avg Ticket</h5>
-            <p class="text-xl font-bold text-purple-600">$${safeNumber(designer.avgTicket)}</p>
-          </div>
-          <div class="bg-orange-50 p-4 rounded-lg">
-            <h5 class="font-semibold text-orange-800">Goal</h5>
-            <p class="text-xl font-bold text-orange-600">$${safeNumber(designer.goal).toLocaleString()}</p>
-            <div class="w-full bg-orange-200 rounded-full h-2 mt-1">
-              <div class="bg-orange-600 h-2 rounded-full" style="width:${Math.min(+goalPct,100)}%"></div>
-            </div>
-          </div>
-        </div>
-      `;
-      showModal('drillDownModal');
-    }
-
-    // View + ranking toggles
-    function switchView(view) {
+    function switchView(view){
       currentView = view;
-      document.querySelectorAll('[id$="View"]').forEach(btn => {
-        btn.className = 'px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300';
-      });
-      document.getElementById(view + 'View').className = 'px-4 py-2 bg-indigo-600 text-white rounded-lg font-medium';
-
+      setActiveViewButton(view);
       const periods = {
         weekly: 'Week of September 2-8, 2025',
         monthly: 'September 2025',
         quarterly: 'Q3 2025',
         ytd: 'January - September 2025'
       };
-      document.getElementById('currentPeriod').textContent = periods[view];
+      $('currentPeriod').textContent = periods[view];
     }
 
-    function switchRankingCriteria(criteria) {
-      currentRankingCriteria = criteria;
-      document.getElementById('rankBySales').className   = 'px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-medium text-sm hover:bg-gray-300';
-      document.getElementById('rankByClosing').className = 'px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-medium text-sm hover:bg-gray-300';
-      document.getElementById('rankByTicket').className  = 'px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-medium text-sm hover:bg-gray-300';
-
-      const colors = { sales: 'bg-green-600', closing: 'bg-blue-600', ticket: 'bg-purple-600' };
-      document.getElementById(`rankBy${criteria.charAt(0).toUpperCase() + criteria.slice(1)}`).className =
-        `px-4 py-2 ${colors[criteria]} text-white rounded-lg font-medium text-sm`;
-
-      renderDesignerTable();
-      renderTopPerformers();
+    function switchRanking(rank){
+      currentRanking = rank;
+      setActiveRankButton(rank);
+      // Re-render table with last data (if cached)
+      if (window.__lastData) renderTable(window.__lastData);
     }
 
-    // Modals
-    function showModal(id) { const el = document.getElementById(id); el.classList.remove('hidden'); el.classList.add('flex'); }
-    function hideModal(id) { const el = document.getElementById(id); el.classList.add('hidden'); el.classList.remove('flex'); }
+    // ======== DATA FETCH & RENDER ========
+    async function fetchRegionalData(){
+      const url = `${METRICS_ENDPOINT}?region=${encodeURIComponent(currentRegion)}&month=${encodeURIComponent(currentMonth)}`;
+      let res;
+      try{
+        res = await fetch(url, { headers: { 'Accept': 'application/json' }});
+      } catch(e){
+        console.error('Network error:', e);
+        showToast('Network error contacting API.');
+        return;
+      }
+      if (!res.ok){
+        const text = await res.text().catch(()=> '');
+        console.error('API error:', res.status, text);
+        showToast('API returned an error. Check route or env vars.');
+        return;
+      }
+      const shaped = await res.json();
+      // shaped example:
+      // { "downtown-seattle": { totals:{monthlySales:84100}, designers:[{name:"Sarah", monthlySales:45200, ...}, ...] } }
+      window.__lastData = shaped;
+      renderDashboard(shaped);
+    }
 
-    // Export CSV
-    function exportData() {
-      const csv = "data:text/csv;charset=utf-8,"
-        + "Rank,Franchise,Location,Monthly Sales,Monthly Goal,% of Goal,Avg Ticket,Conversion Rate,Designers,Top Performer\n"
-        + franchises
-          .map((f,i,arr) => {
-            const rank = [...arr].sort((a,b)=>b.monthlySales - a.monthlySales).findIndex(x => x.id===f.id) + 1;
-            const pct  = ((safeNumber(f.monthlySales) / Math.max(1, safeNumber(f.monthlyGoal))) * 100).toFixed(1);
-            return `${rank},"${f.name}","${f.location||''}",${safeNumber(f.monthlySales)},${safeNumber(f.monthlyGoal)},${pct}%,${safeNumber(f.avgTicket)},${safeNumber(f.conversionRate)}%,${f.designers.length},"${f.topPerformer||''}"`;
-          })
-          .join("\n");
-      const a = document.createElement("a");
-      a.href = encodeURI(csv);
-      a.download = `regional_performance_${currentMonth}.csv`;
-      document.body.appendChild(a);
+    function renderDashboard(shaped){
+      // Build a flat list of designers w/ franchise context for ranking
+      const rows = [];
+      let allDesigners = 0, totalSales = 0, totalTicket = 0, totalConv = 0, ticketCount = 0, convCount = 0;
+
+      Object.entries(shaped).forEach(([franchiseSlug, payload])=>{
+        const designers = payload?.designers || [];
+        designers.forEach(d => {
+          rows.push({
+            franchise: franchiseSlug,
+            name: d.name,
+            sales: +d.monthlySales || 0,
+            avgTicket: +d.avgTicket || null,
+            conversionRate: +d.conversionRate || null
+          });
+          allDesigners += 1;
+          totalSales += (+d.monthlySales || 0);
+          if (d.avgTicket != null) { totalTicket += (+d.avgTicket); ticketCount++; }
+          if (d.conversionRate != null) { totalConv += (+d.conversionRate); convCount++; }
+        });
+      });
+
+      // Header metrics
+      $('regionSummary').textContent = `Canada Region - ${Object.keys(shaped).length} Franchise Locations`;
+      $('totalDesigners').textContent = allDesigners || '--';
+      $('avgDesignerPerformance').textContent = rows.length
+        ? (rows.reduce((s, r)=> s + (r.sales || 0), 0) / Math.max(1, rows.length * 50000) * 100).toFixed(1) + '%'
+        : '--';
+      $('avgSalesPerDesigner').textContent = rows.length
+        ? money(totalSales / rows.length)
+        : '--';
+
+      $('avgTicketValue').textContent = ticketCount ? money(totalTicket / ticketCount) : '--';
+      $('avgConversionRate').textContent = convCount ? pct(totalConv / convCount) : '--';
+      $('avgAppointments').textContent = (18.3).toFixed(1); // demo
+
+      renderTable(rows);
+    }
+
+    function renderTable(rows){
+      const tbody = $('designerTableBody');
+      tbody.innerHTML = '';
+
+      // Sort by current ranking
+      const sorted = [...rows].sort((a,b)=>{
+        if (currentRanking === 'sales')   return (b.sales||0) - (a.sales||0);
+        if (currentRanking === 'closing') return (b.conversionRate||0) - (a.conversionRate||0);
+        if (currentRanking === 'ticket')  return (b.avgTicket||0) - (a.avgTicket||0);
+        return 0;
+      });
+
+      sorted.forEach((d, idx)=>{
+        const rank = idx + 1;
+
+        const rankBadge =
+          rank === 1 ? 'bg-yellow-100 text-yellow-800 border-yellow-200' :
+          rank <= 5 ? 'bg-green-100 text-green-800 border-green-200' :
+          rank <= 15 ? 'bg-blue-100 text-blue-800 border-blue-200' :
+          'bg-gray-100 text-gray-800 border-gray-200';
+
+        const perfIcon = (() => {
+          const goal = 50000; // demo target per designer
+          const pct = (d.sales / goal) * 100;
+          if (pct >= 95) return '🌟';
+          if (pct >= 80) return '✅';
+          if (pct >= 60) return '⚠️';
+          return '🔴';
+        })();
+
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-gray-50';
+
+        tr.innerHTML = `
+          <td class="px-6 py-4 whitespace-nowrap">
+            <span class="chip border ${rankBadge}">#${rank}</span>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap">
+            <div class="font-medium text-gray-900">${d.name || '--'}</div>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap">
+            <div class="font-medium text-gray-900">${d.franchise}</div>
+            <div class="text-sm text-gray-500">—</div>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+            ${money(d.sales)}
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+            ${d.avgTicket != null ? money(d.avgTicket) : '--'}
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+            ${d.conversionRate != null ? pct(d.conversionRate) : '--'}
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap text-center">
+            <span class="text-lg">${perfIcon}</span>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+            <button class="text-indigo-600 hover:text-indigo-900">View Profile</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function exportCSV(){
+      if (!window.__lastData){ showToast('No data to export yet.'); return; }
+      const rows = [];
+      Object.entries(window.__lastData).forEach(([slug, payload])=>{
+        const designers = payload?.designers || [];
+        designers.forEach(d=>{
+          rows.push([
+            slug,
+            d.name ?? '',
+            d.monthlySales ?? '',
+            d.avgTicket ?? '',
+            d.conversionRate ?? ''
+          ]);
+        });
+      });
+      const header = ['Franchise','Designer','Monthly Sales','Avg Ticket','Conversion Rate'];
+      const csv = [header, ...rows].map(r => r.map(x => String(x).replace(/"/g,'""')).map(x => `"${x}"`).join(',')).join('\n');
+
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `regional_export_${currentMonth}.csv`;
       a.click();
-      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
     }
 
-    // Designer filters
-    function showDesignerFilterModal(){ showModal('designerFilterModal'); }
-    function handleDesignerFilter(e){
-      e.preventDefault();
-      designerFilters.performance = document.getElementById('performanceFilter').value;
-      designerFilters.franchise   = document.getElementById('franchiseFilter').value;
-      designerFilters.minSales    = document.getElementById('minSales').value ? parseInt(document.getElementById('minSales').value,10) : null;
-      designerFilters.maxSales    = document.getElementById('maxSales').value ? parseInt(document.getElementById('maxSales').value,10) : null;
-      renderDesignerTable();
-      hideModal('designerFilterModal');
-    }
-    function clearDesignerFilters(){
-      designerFilters = { performance:'all', franchise:'all', minSales:null, maxSales:null };
-      document.getElementById('performanceFilter').value = 'all';
-      document.getElementById('franchiseFilter').value   = 'all';
-      document.getElementById('minSales').value = '';
-      document.getElementById('maxSales').value = '';
-      renderDesignerTable();
-    }
-
-    // Add/Delete franchise (front-end only; creation API wiring can be added later)
-    function addFranchise(e){
-      e.preventDefault();
-      // Front-end add for now (keeps UI responsive even if write API not ready)
-      const name = document.getElementById('newFranchiseName').value.trim();
-      const location = document.getElementById('newFranchiseLocation').value.trim();
-      const goal = parseInt(document.getElementById('newFranchiseGoal').value,10);
-      const count = parseInt(document.getElementById('newFranchiseDesigners').value,10);
-
-      if (!name || !location || !goal || !count) { alert('Please fill in all fields'); return; }
-
-      const designers = Array.from({length: count}).map((_,i) => ({
-        name: `Designer ${i+1}`,
-        sales: 0, goal: Math.round(goal/count),
-        avgTicket: 0, conversionRate: 0, experience: '', specialty: ''
-      }));
-
-      franchises.push({
-        id: franchiseIdCounter++,
-        name, location,
-        monthlySales: 0, monthlyGoal: goal,
-        avgTicket: 0, conversionRate: 0,
-        designerCount: designers.length,
-        topPerformer: designers[0]?.name || '',
-        trend: 'stable',
-        designers
-      });
-
-      updateDesignerMetrics();
-      renderDesignerTable();
-      renderTopPerformers();
-      renderFranchiseManagementTable();
-      updateFranchiseFilterOptions();
-
-      document.getElementById('addFranchiseForm').reset();
-      alert(`Added ${name}. (Optional server save can be added later.)`);
-    }
-
-    function deleteFranchise(){
-      if (franchiseToDelete == null) return;
-      const idx = franchises.findIndex(f => f.id === franchiseToDelete);
-      if (idx === -1) return;
-      const removed = franchises[idx];
-      franchises.splice(idx, 1);
-
-      updateDesignerMetrics();
-      renderDesignerTable();
-      renderTopPerformers();
-      renderFranchiseManagementTable();
-      updateFranchiseFilterOptions();
-
-      hideModal('deleteConfirmationModal');
-      franchiseToDelete = null;
-      alert(`Deleted ${removed.name}.`);
-    }
-
-    /* ==================
-       Event Listeners
-       ================== */
-    function setupEventListeners() {
-      // View toggles
-      document.getElementById('weeklyView').addEventListener('click', () => switchView('weekly'));
-      document.getElementById('monthlyView').addEventListener('click', () => switchView('monthly'));
-      document.getElementById('quarterlyView').addEventListener('click', () => switchView('quarterly'));
-      document.getElementById('ytdView').addEventListener('click', () => switchView('ytd'));
-
-      // Rank toggles
-      document.getElementById('rankBySales').addEventListener('click', () => switchRankingCriteria('sales'));
-      document.getElementById('rankByClosing').addEventListener('click', () => switchRankingCriteria('closing'));
-      document.getElementById('rankByTicket').addEventListener('click', () => switchRankingCriteria('ticket'));
-
-      // Modals
-      document.getElementById('manageFranchisesBtn').addEventListener('click', () => { renderFranchiseManagementTable(); showModal('franchiseManagementModal'); });
-      document.getElementById('filterDesignersBtn').addEventListener('click', showDesignerFilterModal);
-      document.getElementById('exportDataBtn').addEventListener('click', exportData);
-
-      document.getElementById('closeFranchiseManagement').addEventListener('click', () => hideModal('franchiseManagementModal'));
-      document.getElementById('cancelDesignerFilter').addEventListener('click', () => hideModal('designerFilterModal'));
-      document.getElementById('closeDrillDown').addEventListener('click', () => hideModal('drillDownModal'));
-      document.getElementById('cancelDelete').addEventListener('click', () => hideModal('deleteConfirmationModal'));
-      document.getElementById('confirmDelete').addEventListener('click', deleteFranchise);
-
-      // Forms
-      document.getElementById('addFranchiseForm').addEventListener('submit', addFranchise);
-      document.getElementById('designerFilterForm').addEventListener('submit', handleDesignerFilter);
-      document.getElementById('clearFilters').addEventListener('click', clearDesignerFilters);
-
-      // Month selector
-      document.getElementById('monthSelect').addEventListener('change', (e) => {
-        currentMonth = e.target.value;
-        // re-fetch from API when month changes
-        loadRegionData();
-      });
-    }
-
-    // Initialize
-    (function init() {
+    // ======== BOOT ========
+    document.addEventListener('DOMContentLoaded', () => {
+      // attach handlers first so UI responds even if fetch fails
       setupEventListeners();
-      switchView('weekly');            // set initial
-      switchRankingCriteria('sales');  // set initial
-      loadRegionData();                // fetch live data (fallback to sample)
-    })();
+      setActiveViewButton(currentView);
+      setActiveRankButton(currentRanking);
+
+      // try initial data load
+      fetchRegionalData().catch(err=>{
+        console.error(err);
+        showToast('Could not load initial data. Check API route & env.');
+      });
+    });
   </script>
 </body>
 </html>
