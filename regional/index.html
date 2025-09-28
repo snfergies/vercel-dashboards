@@ -1,346 +1,234 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
-  />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Regional Performance Dashboard</title>
+  <!-- Tailwind (ok via CDN for a quick demo) -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    .btn { @apply px-4 py-2 rounded-lg font-medium; }
-    .btn-primary { @apply bg-indigo-600 text-white hover:bg-indigo-700; }
-    .btn-green { @apply bg-green-600 text-white hover:bg-green-700; }
-    .btn-purple { @apply bg-purple-600 text-white hover:bg-purple-700; }
-    .btn-blue { @apply bg-blue-600 text-white hover:bg-blue-700; }
-    .chip { @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium; }
-    .card { @apply bg-white rounded-xl shadow p-4; }
-    .muted { @apply text-gray-500; }
-    .overlay {
-      position: fixed; inset: 0; background: rgba(0,0,0,.45);
-      display: none; align-items: center; justify-content: center; z-index: 50;
-    }
-    .toast {
-      position: fixed; bottom: 16px; right: 16px; z-index: 60;
-      @apply text-white bg-gray-900 rounded-lg px-4 py-2 shadow;
-      display: none;
-    }
-    /* simple busy cursor on page fetch */
-    .busy * { cursor: progress !important; }
-  </style>
 </head>
-
-<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
-  <div class="container mx-auto px-4 py-6">
+<body class="min-h-screen bg-slate-50 text-slate-800">
+  <main class="max-w-6xl mx-auto p-4 sm:p-6">
     <!-- Header -->
-    <div class="bg-white rounded-xl shadow p-6 mb-6">
-      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <section class="bg-white rounded-xl shadow p-5 mb-6">
+      <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 class="text-3xl font-bold text-gray-800">Regional Performance Dashboard</h1>
-          <p class="text-gray-600" id="regionLabel">Canada Region</p>
+          <h1 class="text-2xl font-bold">Regional Performance Dashboard</h1>
+          <p class="text-sm text-slate-500">Canada Region</p>
         </div>
 
-        <div class="flex items-center gap-3">
-          <select id="monthSelect" class="px-3 py-2 border border-gray-300 rounded-lg">
-            <!-- JS fills these -->
+        <div class="flex flex-wrap items-center gap-3">
+          <!-- Month picker (value must be YYYY-MM) -->
+          <select id="monthSelect"
+                  class="border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <option value="2025-09" selected>September 2025</option>
+            <option value="2025-10">October 2025</option>
+            <option value="2025-11">November 2025</option>
+            <option value="2025-12">December 2025</option>
           </select>
 
-          <select id="regionSelect" class="px-3 py-2 border border-gray-300 rounded-lg">
+          <!-- Region selector (value should be your region slug used by the API) -->
+          <select id="regionSelect"
+                  class="border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
             <option value="canada" selected>Canada</option>
             <option value="pnw">PNW</option>
-            <option value="mountain">Mountain</option>
-            <option value="midwest">Midwest</option>
+            <option value="east">East</option>
           </select>
 
-          <button id="refreshBtn" class="btn btn-primary">Refresh</button>
+          <!-- Refresh -->
+          <button id="refreshBtn"
+                  type="button"
+                  class="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 active:bg-indigo-800">
+            Refresh
+          </button>
         </div>
       </div>
 
-      <!-- View + rank toggles -->
-      <div class="mt-4 flex flex-wrap items-center gap-3">
-        <div class="flex gap-2">
-          <button data-view="weekly" class="btn bg-gray-100 text-gray-800" id="view-weekly">Weekly</button>
-          <button data-view="monthly" class="btn bg-indigo-600 text-white" id="view-monthly">Monthly</button>
-          <button data-view="quarterly" class="btn bg-gray-100 text-gray-800" id="view-quarterly">Quarterly</button>
-          <button data-view="ytd" class="btn bg-gray-100 text-gray-800" id="view-ytd">YTD</button>
-        </div>
+      <!-- View toggles (purely cosmetic for now) -->
+      <div class="mt-4 flex items-center gap-2 text-sm">
+        <button class="px-3 py-1.5 rounded bg-slate-100 text-slate-700">Weekly</button>
+        <button class="px-3 py-1.5 rounded bg-indigo-600 text-white">Monthly</button>
+        <button class="px-3 py-1.5 rounded bg-slate-100 text-slate-700">Quarterly</button>
+        <button class="px-3 py-1.5 rounded bg-slate-100 text-slate-700">YTD</button>
 
-        <div class="flex items-center gap-2 ml-auto">
-          <span class="muted">Rank by:</span>
-          <button data-rank="sales" class="chip bg-green-100 text-green-800" id="rank-sales">Sales</button>
-          <button data-rank="close" class="chip bg-gray-100 text-gray-800" id="rank-close">Closing Rate</button>
-          <button data-rank="ticket" class="chip bg-gray-100 text-gray-800" id="rank-ticket">Avg Ticket</button>
+        <div class="ml-auto flex items-center gap-2">
+          <span class="text-slate-500">Rank by:</span>
+          <button class="px-2 py-1 rounded bg-green-100 text-green-700">Sales</button>
+          <button class="px-2 py-1 rounded bg-slate-100 text-slate-700">Closing Rate</button>
+          <button class="px-2 py-1 rounded bg-slate-100 text-slate-700">Avg Ticket</button>
         </div>
       </div>
-    </div>
+    </section>
 
-    <!-- KPIs -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-      <div class="card">
-        <div class="muted">Total Active Designers</div>
-        <div class="text-3xl font-bold" id="kpiDesigners">—</div>
-      </div>
-      <div class="card">
-        <div class="muted">Avg Designer Performance</div>
-        <div class="text-3xl font-bold" id="kpiAvgPerf">—</div>
-      </div>
-      <div class="card">
-        <div class="muted">Avg Sales Per Designer</div>
-        <div class="text-3xl font-bold" id="kpiAvgSales">—</div>
-      </div>
-    </div>
-
-    <!-- Tracking -->
-    <div class="bg-white rounded-xl shadow p-6 mb-6">
-      <h2 class="text-xl font-bold text-gray-800 mb-4">Average Regional Performance Tracking</h2>
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div class="card bg-green-50">
-          <div class="muted">Average Conversion Rate</div>
-          <div class="text-2xl font-semibold" id="avgConv">—</div>
-          <div class="muted text-sm">Previous Month: <span id="prevConv">—</span></div>
-        </div>
-        <div class="card bg-purple-50">
-          <div class="muted">Average Ticket Value</div>
-          <div class="text-2xl font-semibold" id="avgTicket">—</div>
-          <div class="muted text-sm">Previous Month: <span id="prevTicket">—</span></div>
-        </div>
-        <div class="card bg-blue-50">
-          <div class="muted">Average Appointments</div>
-          <div class="text-2xl font-semibold" id="avgAppts">—</div>
-          <div class="muted text-sm">Per designer / month</div>
-        </div>
+    <!-- KPI cards -->
+    <section class="grid gap-4 md:grid-cols-3">
+      <div class="bg-white rounded-xl shadow p-5">
+        <div class="text-sm text-slate-500">Total Active Designers</div>
+        <div id="totalDesigners" class="mt-2 text-3xl font-bold tracking-tight">—</div>
       </div>
 
-      <div class="mt-6 flex flex-wrap gap-3 justify-end">
-        <button id="manageBtn" class="btn btn-green">Manage Locations</button>
-        <button id="filterBtn" class="btn btn-purple">Filter Designers</button>
-        <button id="exportBtn" class="btn btn-blue">Export Data</button>
+      <div class="bg-white rounded-xl shadow p-5">
+        <div class="text-sm text-slate-500">Avg Designer Performance (Sales)</div>
+        <div id="avgDesignerSales" class="mt-2 text-3xl font-bold tracking-tight">—</div>
       </div>
-    </div>
 
-    <!-- Rankings table header (rows populated by JS if/when needed) -->
-    <div class="bg-white rounded-xl shadow p-6">
-      <h2 class="text-xl font-bold text-gray-800">Regional Designer Performance Rankings</h2>
-      <p class="muted text-sm mb-4" id="periodText">Current Period: Week of September 2–8, 2025</p>
+      <div class="bg-white rounded-xl shadow p-5">
+        <div class="text-sm text-slate-500">Avg Sales Per Designer</div>
+        <div id="avgSalesPerDesigner" class="mt-2 text-3xl font-bold tracking-tight">—</div>
+      </div>
+    </section>
+
+    <!-- Table -->
+    <section class="mt-6 bg-white rounded-xl shadow overflow-hidden">
+      <div class="p-5 border-b">
+        <h2 class="text-lg font-semibold">Regional Designer Performance Rankings</h2>
+        <p id="periodLabel" class="text-sm text-slate-500">Current Period:</p>
+      </div>
+
       <div class="overflow-x-auto">
-        <table class="w-full text-left">
-          <thead class="bg-gray-50">
-            <tr class="text-xs uppercase tracking-wider text-gray-500">
-              <th class="px-4 py-3">Rank</th>
-              <th class="px-4 py-3">Designer</th>
-              <th class="px-4 py-3">Franchise Location</th>
-              <th class="px-4 py-3">Monthly Sales</th>
-              <th class="px-4 py-3">Avg Ticket</th>
-              <th class="px-4 py-3">Conversion Rate</th>
-              <th class="px-4 py-3">Performance</th>
-              <th class="px-4 py-3">Actions</th>
+        <table class="min-w-full text-sm">
+          <thead class="bg-slate-50 text-slate-600">
+            <tr>
+              <th class="px-4 py-3 text-left font-medium">Franchise</th>
+              <th class="px-4 py-3 text-left font-medium">Designers</th>
+              <th class="px-4 py-3 text-left font-medium">Monthly Sales</th>
+              <th class="px-4 py-3 text-left font-medium">Avg per Designer</th>
             </tr>
           </thead>
-          <tbody id="rankingBody">
-            <!-- optional: filled when you add ranking data fetching -->
+          <tbody id="franchiseTbody" class="divide-y">
+            <!-- Rows injected by JS -->
           </tbody>
         </table>
       </div>
-    </div>
-  </div>
+    </section>
+  </main>
 
-  <!-- Manage Locations Modal -->
-  <div id="locationOverlay" class="overlay">
-    <div class="bg-white rounded-xl shadow-xl w-full max-w-md p-6">
-      <h3 class="text-lg font-bold text-gray-800 mb-3">Add Franchise Location</h3>
-
-      <div class="grid gap-3">
-        <label class="text-sm">
-          Slug
-          <input id="slugInput" class="mt-1 w-full border rounded-lg px-3 py-2" placeholder="downtown-seattle" />
-        </label>
-        <label class="text-sm">
-          Name
-          <input id="nameInput" class="mt-1 w-full border rounded-lg px-3 py-2" placeholder="Downtown Seattle" />
-        </label>
-        <label class="text-sm">
-          City
-          <input id="cityInput" class="mt-1 w-full border rounded-lg px-3 py-2" placeholder="Seattle" />
-        </label>
-        <label class="text-sm">
-          Province / State
-          <input id="stateInput" class="mt-1 w-full border rounded-lg px-3 py-2" placeholder="WA" />
-        </label>
-      </div>
-
-      <div class="flex justify-end gap-3 mt-5">
-        <button id="cancelLocationBtn" class="btn bg-gray-100 text-gray-800">Cancel</button>
-        <button id="saveLocationBtn" class="btn btn-green">Save Location</button>
-      </div>
-      <p class="text-xs text-gray-500 mt-3">After saving, remember to seed monthly metrics for this location so it shows up in charts.</p>
-    </div>
-  </div>
-
-  <!-- Toast -->
-  <div id="toast" class="toast">Saved.</div>
-
+  <!-- App logic. Keep at the bottom so elements exist when we bind events. -->
   <script>
-    // ---------- Helpers ----------
-    const $ = (sel, root = document) => root.querySelector(sel);
-    const show = el => el.style.display = 'flex';
-    const hide = el => el.style.display = 'none';
-    const toast = (msg, ms = 2200) => {
-      const t = $('#toast');
-      t.textContent = msg; t.style.display = 'block';
-      setTimeout(() => t.style.display = 'none', ms);
-    };
-    const setBusy = (busy) => {
-      document.body.classList.toggle('busy', busy);
+  (() => {
+    const monthEl   = document.getElementById('monthSelect');
+    const regionEl  = document.getElementById('regionSelect');
+    const refreshEl = document.getElementById('refreshBtn');
+
+    const totalDesignersEl     = document.getElementById('totalDesigners');
+    const avgDesignerSalesEl   = document.getElementById('avgDesignerSales');
+    const avgSalesPerDesignerEl= document.getElementById('avgSalesPerDesigner');
+    const franchiseTbodyEl     = document.getElementById('franchiseTbody');
+    const periodLabelEl        = document.getElementById('periodLabel');
+
+    const fmtCurrency = (n) =>
+      new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(n || 0);
+
+    const dbg = (msg, data) => console.log(`[regional] ${msg}`, data);
+
+    function setLoadingState() {
+      totalDesignersEl.textContent      = '…';
+      avgDesignerSalesEl.textContent    = '…';
+      avgSalesPerDesignerEl.textContent = '…';
+      franchiseTbodyEl.innerHTML = `
+        <tr><td class="px-4 py-4 text-slate-400" colspan="4">Loading…</td></tr>
+      `;
     }
 
-    // Month select populate (this and next few months)
-    (function initMonthSelect(){
-      const sel = $('#monthSelect');
-      const now = new Date();
-      const opts = [];
-      for (let i = -1; i < 4; i++) {
-        const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
-        const ym = d.toISOString().slice(0,7); // YYYY-MM
-        const label = d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-        const o = document.createElement('option');
-        o.value = ym; o.textContent = label;
-        if (i === 0) o.selected = true;
-        opts.push(o);
-      }
-      opts.forEach(o => sel.appendChild(o));
-    })();
-
-    // ---------- State ----------
-    let currentView = 'monthly';   // weekly|monthly|quarterly|ytd
-    let currentRank = 'sales';     // sales|close|ticket
-
-    const getParams = () => {
-      const month = $('#monthSelect').value;
-      const region = $('#regionSelect').value;
-      return { month, region };
+    function setEmptyState() {
+      totalDesignersEl.textContent      = '0';
+      avgDesignerSalesEl.textContent    = '—';
+      avgSalesPerDesignerEl.textContent = '—';
+      franchiseTbodyEl.innerHTML = `
+        <tr><td class="px-4 py-4 text-slate-400" colspan="4">No data for this month/region.</td></tr>
+      `;
     }
 
-    // ---------- Load Metrics (simple demo read) ----------
-    async function loadKPIs() {
-      const { month, region } = getParams();
-      setBusy(true);
+    function setPeriodLabel(monthValue) {
+      // Month value is YYYY-MM -> format to long month
       try {
-        // This endpoint should return an object shaped like the region map payload
-        // Example we built earlier: GET /api/metrics/region?region=canada&month=2025-09
-        const res = await fetch(`/api/metrics/region?region=${encodeURIComponent(region)}&month=${encodeURIComponent(month)}`);
-        const shaped = await res.json(); // e.g. { 'downtown-seattle': { totals:{monthlySales:84100}, designers:[...] }, ... }
-
-        // Super-basic aggregations (feel free to replace with real numbers from your API)
-        const franchises = Object.values(shaped || {});
-        const totalDesigners = franchises.reduce((sum, f) => sum + (f.designers?.length || 0), 0);
-        const totalSales = franchises.reduce((sum, f) => sum + (f.totals?.monthlySales || 0), 0);
-        const avgSalesPerDesigner = totalDesigners ? Math.round(totalSales / totalDesigners) : 0;
-
-        $('#kpiDesigners').textContent = totalDesigners || '—';
-        $('#kpiAvgPerf').textContent = totalDesigners ? 'Good' : '—';
-        $('#kpiAvgSales').textContent = totalDesigners ? `$${avgSalesPerDesigner.toLocaleString()}` : '—';
-
-        // placeholders for the three tiles
-        $('#avgConv').textContent = totalDesigners ? '— %' : '—';
-        $('#prevConv').textContent = '—';
-        $('#avgTicket').textContent = totalDesigners ? '—' : '—';
-        $('#prevTicket').textContent = '—';
-        $('#avgAppts').textContent = totalDesigners ? '22' : '—';
-
-        // period label (quick demo)
-        const d = new Date(month + '-01T00:00:00');
-        $('#periodText').textContent = `Current Period: ${d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}`;
-        $('#regionLabel').textContent = `${$('#regionSelect').selectedOptions[0].text} Region`;
-      } catch (e) {
-        console.error(e);
-        toast('API error. Check routes / env vars.');
-      } finally {
-        setBusy(false);
+        const [y, m] = monthValue.split('-').map(Number);
+        const d = new Date(y, m - 1, 1);
+        const pretty = d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+        periodLabelEl.textContent = `Current Period: ${pretty}`;
+      } catch {
+        periodLabelEl.textContent = `Current Period: ${monthValue}`;
       }
     }
 
-    // ---------- Manage Locations Modal ----------
-    const overlay = $('#locationOverlay');
-    $('#manageBtn').addEventListener('click', () => {
-      // open modal (no more demo alert)
-      $('#slugInput').value = '';
-      $('#nameInput').value = '';
-      $('#cityInput').value = '';
-      $('#stateInput').value = '';
-      show(overlay);
-    });
+    async function loadRegional() {
+      const month  = (monthEl.value || '').trim();       // e.g., "2025-09"
+      const region = (regionEl.value || '').toLowerCase();
 
-    $('#cancelLocationBtn').addEventListener('click', () => hide(overlay));
+      setPeriodLabel(month);
+      setLoadingState();
+      dbg('loading…', { month, region });
 
-    $('#saveLocationBtn').addEventListener('click', async () => {
-      const slug = $('#slugInput').value.trim();
-      const name = $('#nameInput').value.trim();
-      const city = $('#cityInput').value.trim();
-      const state = $('#stateInput').value.trim();
-
-      if (!slug || !name) {
-        toast('Slug and Name are required');
-        return;
-      }
-
-      setBusy(true);
       try {
-        // Calls your serverless route that inserts into public.franchises
-        const res = await fetch('/api/franchises/create', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ slug, name, city, state })
-        });
+        const url = `/api/metrics/region?region=${encodeURIComponent(region)}&month=${encodeURIComponent(month)}`;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        dbg('data', data);
 
-        if (!res.ok) {
-          const msg = await res.text();
-          throw new Error(msg || 'Failed to save');
+        // Aggregate from shaped object: { slug: { totals:{monthlySales}, designers:[...] } }
+        const entries = Object.entries(data || {});
+        if (entries.length === 0) {
+          setEmptyState();
+          return;
         }
-        toast('Franchise saved');
-        hide(overlay);
-        // Optional: reload KPIs if adding a location should affect counts
-        await loadKPIs();
+
+        let totalDesigners = 0;
+        let totalSales     = 0;
+
+        franchiseTbodyEl.innerHTML = '';
+
+        for (const [slug, payload] of entries) {
+          const designers = payload?.designers || [];
+          const monthly   = Number(payload?.totals?.monthlySales || 0);
+
+          totalDesigners += designers.length;
+          totalSales     += monthly;
+
+          const avgPerDesigner = designers.length ? (monthly / designers.length) : 0;
+
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td class="px-4 py-3 font-medium">${slug}</td>
+            <td class="px-4 py-3">${designers.length}</td>
+            <td class="px-4 py-3">${fmtCurrency(monthly)}</td>
+            <td class="px-4 py-3">${designers.length ? fmtCurrency(avgPerDesigner) : '—'}</td>
+          `;
+          franchiseTbodyEl.appendChild(tr);
+        }
+
+        totalDesignersEl.textContent = String(totalDesigners);
+        avgSalesPerDesignerEl.textContent =
+          totalDesigners ? fmtCurrency(totalSales / totalDesigners) : '—';
+
+        // A simple "avg designer performance (sales)" = average of each franchise's per-designer average.
+        // Just for demo. Adjust to your real metric when you have it.
+        const perFranchiseAverages = entries.map(([_, p]) => {
+          const designers = p?.designers?.length || 0;
+          const monthly   = Number(p?.totals?.monthlySales || 0);
+          return designers ? (monthly / designers) : 0;
+        }).filter(n => n > 0);
+        const avgDesignerPerf = perFranchiseAverages.length
+          ? perFranchiseAverages.reduce((a,b) => a+b, 0) / perFranchiseAverages.length
+          : 0;
+
+        avgDesignerSalesEl.textContent = perFranchiseAverages.length ? fmtCurrency(avgDesignerPerf) : '—';
+
       } catch (err) {
-        console.error(err);
-        toast('Error saving franchise');
-      } finally {
-        setBusy(false);
+        console.error('[regional] load error', err);
+        alert('Could not load data. See console for details.');
+        setEmptyState();
       }
-    });
+    }
 
-    // ---------- Other buttons ----------
-    $('#filterBtn').addEventListener('click', () => toast('Filter panel coming soon'));
-    $('#exportBtn').addEventListener('click', () => toast('Export started (demo)'));
+    // Wire up events
+    refreshEl?.addEventListener('click', loadRegional);
+    monthEl?.addEventListener('change', loadRegional);
+    regionEl?.addEventListener('change', loadRegional);
 
-    // ---------- View / Rank toggles ----------
-    const viewButtons = ['weekly','monthly','quarterly','ytd'].map(v => $(`#view-${v}`));
-    viewButtons.forEach(btn => {
-      btn.addEventListener('click', () => {
-        viewButtons.forEach(b => b.className = 'btn bg-gray-100 text-gray-800');
-        btn.className = 'btn bg-indigo-600 text-white';
-        currentView = btn.dataset.view;
-        loadKPIs();
-      });
-    });
-
-    const rankButtons = [$('#rank-sales'), $('#rank-close'), $('#rank-ticket')];
-    rankButtons.forEach(btn => {
-      btn.addEventListener('click', () => {
-        rankButtons.forEach(b => b.className = 'chip bg-gray-100 text-gray-800');
-        btn.className = 'chip bg-green-100 text-green-800';
-        currentRank = btn.dataset.rank;
-        // TODO: re-sort table by currentRank when you have table data
-      });
-    });
-
-    // ---------- Refresh & on-load ----------
-    $('#refreshBtn').addEventListener('click', loadKPIs);
-    $('#monthSelect').addEventListener('change', loadKPIs);
-    $('#regionSelect').addEventListener('change', loadKPIs);
-
-    // initial load
-    loadKPIs();
+    // Initial load
+    loadRegional();
+  })();
   </script>
 </body>
 </html>
