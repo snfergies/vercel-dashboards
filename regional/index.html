@@ -1,234 +1,285 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Regional Performance Dashboard</title>
-  <!-- Tailwind (ok via CDN for a quick demo) -->
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="min-h-screen bg-slate-50 text-slate-800">
-  <main class="max-w-6xl mx-auto p-4 sm:p-6">
-    <!-- Header -->
-    <section class="bg-white rounded-xl shadow p-5 mb-6">
-      <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 class="text-2xl font-bold">Regional Performance Dashboard</h1>
-          <p class="text-sm text-slate-500">Canada Region</p>
-        </div>
-
-        <div class="flex flex-wrap items-center gap-3">
-          <!-- Month picker (value must be YYYY-MM) -->
-          <select id="monthSelect"
-                  class="border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
-            <option value="2025-09" selected>September 2025</option>
-            <option value="2025-10">October 2025</option>
-            <option value="2025-11">November 2025</option>
-            <option value="2025-12">December 2025</option>
-          </select>
-
-          <!-- Region selector (value should be your region slug used by the API) -->
-          <select id="regionSelect"
-                  class="border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
-            <option value="canada" selected>Canada</option>
-            <option value="pnw">PNW</option>
-            <option value="east">East</option>
-          </select>
-
-          <!-- Refresh -->
-          <button id="refreshBtn"
-                  type="button"
-                  class="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 active:bg-indigo-800">
-            Refresh
-          </button>
-        </div>
+<main class="max-w-6xl mx-auto p-4 sm:p-6">
+  <!-- Header -->
+  <section class="bg-white rounded-xl shadow p-5 mb-6">
+    <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+      <div>
+        <h1 class="text-2xl font-bold">Regional Performance Dashboard</h1>
+        <p class="text-sm text-slate-500">Canada Region</p>
       </div>
 
-      <!-- View toggles (purely cosmetic for now) -->
-      <div class="mt-4 flex items-center gap-2 text-sm">
-        <button class="px-3 py-1.5 rounded bg-slate-100 text-slate-700">Weekly</button>
-        <button class="px-3 py-1.5 rounded bg-indigo-600 text-white">Monthly</button>
-        <button class="px-3 py-1.5 rounded bg-slate-100 text-slate-700">Quarterly</button>
-        <button class="px-3 py-1.5 rounded bg-slate-100 text-slate-700">YTD</button>
+      <div class="flex flex-wrap items-center gap-3">
+        <select id="monthSelect" class="border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          <option value="2025-09" selected>September 2025</option>
+          <option value="2025-10">October 2025</option>
+          <option value="2025-11">November 2025</option>
+          <option value="2025-12">December 2025</option>
+        </select>
 
-        <div class="ml-auto flex items-center gap-2">
-          <span class="text-slate-500">Rank by:</span>
-          <button class="px-2 py-1 rounded bg-green-100 text-green-700">Sales</button>
-          <button class="px-2 py-1 rounded bg-slate-100 text-slate-700">Closing Rate</button>
-          <button class="px-2 py-1 rounded bg-slate-100 text-slate-700">Avg Ticket</button>
+        <select id="regionSelect" class="border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          <option value="canada" selected>Canada</option>
+          <option value="pnw">PNW</option>
+          <option value="east">East</option>
+        </select>
+
+        <button id="refreshBtn" type="button"
+                class="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 active:bg-indigo-800">
+          Refresh
+        </button>
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="mt-4 flex items-center gap-2 text-sm">
+      <div class="flex gap-2" id="viewBtns">
+        <button class="px-3 py-1.5 rounded bg-slate-100 text-slate-700" data-view="weekly">Weekly</button>
+        <button class="px-3 py-1.5 rounded bg-indigo-600 text-white" data-view="monthly">Monthly</button>
+        <button class="px-3 py-1.5 rounded bg-slate-100 text-slate-700" data-view="quarterly">Quarterly</button>
+        <button class="px-3 py-1.5 rounded bg-slate-100 text-slate-700" data-view="ytd">YTD</button>
+      </div>
+
+      <div class="ml-auto flex items-center gap-2">
+        <span class="text-slate-500">Rank by:</span>
+        <div id="rankBtns" class="flex gap-2">
+          <button class="px-2 py-1 rounded bg-green-100 text-green-700" data-rank="sales">Sales</button>
+          <button class="px-2 py-1 rounded bg-slate-100 text-slate-700" data-rank="closing">Closing Rate</button>
+          <button class="px-2 py-1 rounded bg-slate-100 text-slate-700" data-rank="ticket">Avg Ticket</button>
         </div>
       </div>
-    </section>
+    </div>
+  </section>
 
-    <!-- KPI cards -->
-    <section class="grid gap-4 md:grid-cols-3">
-      <div class="bg-white rounded-xl shadow p-5">
-        <div class="text-sm text-slate-500">Total Active Designers</div>
-        <div id="totalDesigners" class="mt-2 text-3xl font-bold tracking-tight">—</div>
-      </div>
+  <!-- KPIs -->
+  <section class="grid gap-4 md:grid-cols-3">
+    <div class="bg-white rounded-xl shadow p-5">
+      <div class="text-sm text-slate-500">Total Active Designers</div>
+      <div id="totalDesigners" class="mt-2 text-3xl font-bold tracking-tight">—</div>
+    </div>
 
-      <div class="bg-white rounded-xl shadow p-5">
-        <div class="text-sm text-slate-500">Avg Designer Performance (Sales)</div>
-        <div id="avgDesignerSales" class="mt-2 text-3xl font-bold tracking-tight">—</div>
-      </div>
+    <div class="bg-white rounded-xl shadow p-5">
+      <div class="text-sm text-slate-500">Avg Designer Performance (Sales)</div>
+      <div id="avgDesignerSales" class="mt-2 text-3xl font-bold tracking-tight">—</div>
+    </div>
 
-      <div class="bg-white rounded-xl shadow p-5">
-        <div class="text-sm text-slate-500">Avg Sales Per Designer</div>
-        <div id="avgSalesPerDesigner" class="mt-2 text-3xl font-bold tracking-tight">—</div>
-      </div>
-    </section>
+    <div class="bg-white rounded-xl shadow p-5">
+      <div class="text-sm text-slate-500">Avg Sales Per Designer</div>
+      <div id="avgSalesPerDesigner" class="mt-2 text-3xl font-bold tracking-tight">—</div>
+    </div>
+  </section>
 
-    <!-- Table -->
-    <section class="mt-6 bg-white rounded-xl shadow overflow-hidden">
-      <div class="p-5 border-b">
-        <h2 class="text-lg font-semibold">Regional Designer Performance Rankings</h2>
-        <p id="periodLabel" class="text-sm text-slate-500">Current Period:</p>
-      </div>
+  <!-- Table -->
+  <section class="mt-6 bg-white rounded-xl shadow overflow-hidden">
+    <div class="p-5 border-b">
+      <h2 class="text-lg font-semibold">Regional Designer Performance Rankings</h2>
+      <p id="periodLabel" class="text-sm text-slate-500">Current Period:</p>
+    </div>
 
-      <div class="overflow-x-auto">
-        <table class="min-w-full text-sm">
-          <thead class="bg-slate-50 text-slate-600">
-            <tr>
-              <th class="px-4 py-3 text-left font-medium">Franchise</th>
-              <th class="px-4 py-3 text-left font-medium">Designers</th>
-              <th class="px-4 py-3 text-left font-medium">Monthly Sales</th>
-              <th class="px-4 py-3 text-left font-medium">Avg per Designer</th>
-            </tr>
-          </thead>
-          <tbody id="franchiseTbody" class="divide-y">
-            <!-- Rows injected by JS -->
-          </tbody>
-        </table>
-      </div>
-    </section>
-  </main>
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead class="bg-slate-50 text-slate-600">
+        <tr>
+          <th class="px-4 py-3 text-left font-medium">Franchise</th>
+          <th class="px-4 py-3 text-left font-medium">Designers</th>
+          <th class="px-4 py-3 text-left font-medium">Monthly Sales</th>
+          <th class="px-4 py-3 text-left font-medium">Avg per Designer</th>
+          <th class="px-4 py-3 text-left font-medium">Closing Rate</th>
+          <th class="px-4 py-3 text-left font-medium">Avg Ticket</th>
+        </tr>
+        </thead>
+        <tbody id="franchiseTbody" class="divide-y">
+        <!-- rows injected -->
+        </tbody>
+      </table>
+    </div>
+  </section>
+</main>
 
-  <!-- App logic. Keep at the bottom so elements exist when we bind events. -->
-  <script>
-  (() => {
-    const monthEl   = document.getElementById('monthSelect');
-    const regionEl  = document.getElementById('regionSelect');
-    const refreshEl = document.getElementById('refreshBtn');
+<script>
+(() => {
+  // Elements
+  const monthEl   = document.getElementById('monthSelect');
+  const regionEl  = document.getElementById('regionSelect');
+  const refreshEl = document.getElementById('refreshBtn');
+  const periodEl  = document.getElementById('periodLabel');
+  const totalDesignersEl = document.getElementById('totalDesigners');
+  const avgDesignerSalesEl = document.getElementById('avgDesignerSales');
+  const avgSalesPerDesignerEl = document.getElementById('avgSalesPerDesigner');
+  const tbodyEl = document.getElementById('franchiseTbody');
 
-    const totalDesignersEl     = document.getElementById('totalDesigners');
-    const avgDesignerSalesEl   = document.getElementById('avgDesignerSales');
-    const avgSalesPerDesignerEl= document.getElementById('avgSalesPerDesigner');
-    const franchiseTbodyEl     = document.getElementById('franchiseTbody');
-    const periodLabelEl        = document.getElementById('periodLabel');
+  // Button groups
+  const viewBtns = document.getElementById('viewBtns');
+  const rankBtns = document.getElementById('rankBtns');
 
-    const fmtCurrency = (n) =>
-      new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(n || 0);
+  // State
+  let state = {
+    view: 'monthly',   // weekly | monthly | quarterly | ytd  (visual only for now)
+    rankBy: 'sales',   // sales | closing | ticket
+    data: null,        // last fetched data (shaped object)
+    rows: []           // derived rows for table
+  };
 
-    const dbg = (msg, data) => console.log(`[regional] ${msg}`, data);
+  const fmtCurrency = n => new Intl.NumberFormat('en-US', { style:'currency', currency:'USD', maximumFractionDigits:0 }).format(n || 0);
+  const fmtPct = n => `${(Number(n) || 0).toFixed(1)}%`;
 
-    function setLoadingState() {
-      totalDesignersEl.textContent      = '…';
-      avgDesignerSalesEl.textContent    = '…';
-      avgSalesPerDesignerEl.textContent = '…';
-      franchiseTbodyEl.innerHTML = `
-        <tr><td class="px-4 py-4 text-slate-400" colspan="4">Loading…</td></tr>
-      `;
-    }
+  function setActive(groupEl, attr, value) {
+    [...groupEl.querySelectorAll('button')].forEach(btn => {
+      const isActive = btn.dataset[attr] === value;
+      btn.classList.toggle('bg-indigo-600', isActive && groupEl === viewBtns);
+      btn.classList.toggle('text-white', isActive && groupEl === viewBtns);
+      btn.classList.toggle('bg-slate-100', !isActive && groupEl === viewBtns);
+      btn.classList.toggle('text-slate-700', !isActive && groupEl === viewBtns);
 
-    function setEmptyState() {
-      totalDesignersEl.textContent      = '0';
-      avgDesignerSalesEl.textContent    = '—';
-      avgSalesPerDesignerEl.textContent = '—';
-      franchiseTbodyEl.innerHTML = `
-        <tr><td class="px-4 py-4 text-slate-400" colspan="4">No data for this month/region.</td></tr>
-      `;
-    }
-
-    function setPeriodLabel(monthValue) {
-      // Month value is YYYY-MM -> format to long month
-      try {
-        const [y, m] = monthValue.split('-').map(Number);
-        const d = new Date(y, m - 1, 1);
-        const pretty = d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-        periodLabelEl.textContent = `Current Period: ${pretty}`;
-      } catch {
-        periodLabelEl.textContent = `Current Period: ${monthValue}`;
+      if (groupEl === rankBtns) {
+        btn.classList.toggle('bg-green-100', isActive && value === 'sales');
+        btn.classList.toggle('text-green-700', isActive && value === 'sales');
+        btn.classList.toggle('bg-slate-100', !(isActive && value === 'sales'));
+        btn.classList.toggle('text-slate-700', !(isActive && value === 'sales'));
       }
+    });
+  }
+
+  function setPeriodLabel(monthValue) {
+    try {
+      const [y, m] = monthValue.split('-').map(Number);
+      const d = new Date(y, m - 1, 1);
+      const pretty = d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+      periodEl.textContent = `Current Period: ${pretty}`;
+    } catch {
+      periodEl.textContent = `Current Period: ${monthValue}`;
     }
+  }
 
-    async function loadRegional() {
-      const month  = (monthEl.value || '').trim();       // e.g., "2025-09"
-      const region = (regionEl.value || '').toLowerCase();
+  function setLoading() {
+    totalDesignersEl.textContent = '…';
+    avgDesignerSalesEl.textContent = '…';
+    avgSalesPerDesignerEl.textContent = '…';
+    tbodyEl.innerHTML = `<tr><td class="px-4 py-4 text-slate-400" colspan="6">Loading…</td></tr>`;
+  }
 
-      setPeriodLabel(month);
-      setLoadingState();
-      dbg('loading…', { month, region });
+  function setEmpty() {
+    totalDesignersEl.textContent = '0';
+    avgDesignerSalesEl.textContent = '—';
+    avgSalesPerDesignerEl.textContent = '—';
+    tbodyEl.innerHTML = `<tr><td class="px-4 py-4 text-slate-400" colspan="6">No data.</td></tr>`;
+  }
 
-      try {
-        const url = `/api/metrics/region?region=${encodeURIComponent(region)}&month=${encodeURIComponent(month)}`;
-        const res = await fetch(url);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-        dbg('data', data);
+  function deriveRowsFromData(data) {
+    // data shape: { slug: { totals:{monthlySales, closingRate?, avgTicket?}, designers:[...] } }
+    const rows = Object.entries(data || {}).map(([slug, payload]) => {
+      const designers = payload?.designers || [];
+      const monthlySales = Number(payload?.totals?.monthlySales || 0);
 
-        // Aggregate from shaped object: { slug: { totals:{monthlySales}, designers:[...] } }
-        const entries = Object.entries(data || {});
-        if (entries.length === 0) {
-          setEmptyState();
-          return;
-        }
+      // fallbacks if not present in payload
+      const closingRate = payload?.totals?.closingRate ?? 0; // expect percentage number (0-100)
+      const avgTicket = payload?.totals?.avgTicket ?? (designers.length ? monthlySales / designers.length : 0);
 
-        let totalDesigners = 0;
-        let totalSales     = 0;
+      return {
+        slug,
+        designersCount: designers.length,
+        monthlySales,
+        avgPerDesigner: designers.length ? monthlySales / designers.length : 0,
+        closingRate,
+        avgTicket
+      };
+    });
+    return rows;
+  }
 
-        franchiseTbodyEl.innerHTML = '';
+  function sortRows(rows) {
+    const k = state.rankBy;
+    const key = k === 'sales' ? 'monthlySales'
+              : k === 'closing' ? 'closingRate'
+              : 'avgTicket';
+    rows.sort((a,b) => (b[key] || 0) - (a[key] || 0));
+    return rows;
+  }
 
-        for (const [slug, payload] of entries) {
-          const designers = payload?.designers || [];
-          const monthly   = Number(payload?.totals?.monthlySales || 0);
+  function render() {
+    if (!state.rows.length) { setEmpty(); return; }
 
-          totalDesigners += designers.length;
-          totalSales     += monthly;
+    // KPIs
+    const totalDesigners = state.rows.reduce((sum, r) => sum + r.designersCount, 0);
+    const totalSales     = state.rows.reduce((sum, r) => sum + r.monthlySales, 0);
+    const avgDesignerPerf = state.rows
+      .filter(r => r.designersCount)
+      .reduce((sum, r, _, arr) => sum + (r.monthlySales / r.designersCount) / arr.length, 0);
 
-          const avgPerDesigner = designers.length ? (monthly / designers.length) : 0;
+    totalDesignersEl.textContent = String(totalDesigners);
+    avgSalesPerDesignerEl.textContent = totalDesigners ? fmtCurrency(totalSales / totalDesigners) : '—';
+    avgDesignerSalesEl.textContent = state.rows.length ? fmtCurrency(avgDesignerPerf) : '—';
 
-          const tr = document.createElement('tr');
-          tr.innerHTML = `
-            <td class="px-4 py-3 font-medium">${slug}</td>
-            <td class="px-4 py-3">${designers.length}</td>
-            <td class="px-4 py-3">${fmtCurrency(monthly)}</td>
-            <td class="px-4 py-3">${designers.length ? fmtCurrency(avgPerDesigner) : '—'}</td>
-          `;
-          franchiseTbodyEl.appendChild(tr);
-        }
+    // Table
+    const sorted = sortRows([...state.rows]);
+    tbodyEl.innerHTML = sorted.map(r => `
+      <tr>
+        <td class="px-4 py-3 font-medium">${r.slug}</td>
+        <td class="px-4 py-3">${r.designersCount}</td>
+        <td class="px-4 py-3">${fmtCurrency(r.monthlySales)}</td>
+        <td class="px-4 py-3">${r.designersCount ? fmtCurrency(r.avgPerDesigner) : '—'}</td>
+        <td class="px-4 py-3">${r.closingRate ? fmtPct(r.closingRate) : '—'}</td>
+        <td class="px-4 py-3">${r.avgTicket ? fmtCurrency(r.avgTicket) : '—'}</td>
+      </tr>
+    `).join('');
+  }
 
-        totalDesignersEl.textContent = String(totalDesigners);
-        avgSalesPerDesignerEl.textContent =
-          totalDesigners ? fmtCurrency(totalSales / totalDesigners) : '—';
+  async function load() {
+    const month = monthEl.value;
+    const region = regionEl.value.toLowerCase();
 
-        // A simple "avg designer performance (sales)" = average of each franchise's per-designer average.
-        // Just for demo. Adjust to your real metric when you have it.
-        const perFranchiseAverages = entries.map(([_, p]) => {
-          const designers = p?.designers?.length || 0;
-          const monthly   = Number(p?.totals?.monthlySales || 0);
-          return designers ? (monthly / designers) : 0;
-        }).filter(n => n > 0);
-        const avgDesignerPerf = perFranchiseAverages.length
-          ? perFranchiseAverages.reduce((a,b) => a+b, 0) / perFranchiseAverages.length
-          : 0;
+    setActive(viewBtns, 'view', state.view);
+    setActive(rankBtns, 'rank', state.rankBy);
+    setPeriodLabel(month);
+    setLoading();
 
-        avgDesignerSalesEl.textContent = perFranchiseAverages.length ? fmtCurrency(avgDesignerPerf) : '—';
+    try {
+      // For now we always use the month value; view toggle is visual only
+      const url = `/api/metrics/region?region=${encodeURIComponent(region)}&month=${encodeURIComponent(month)}`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
 
-      } catch (err) {
-        console.error('[regional] load error', err);
-        alert('Could not load data. See console for details.');
-        setEmptyState();
-      }
+      state.data = data;
+      state.rows = deriveRowsFromData(data);
+      render();
+    } catch (e) {
+      console.error(e);
+      alert('Failed to load data. See console for details.');
+      setEmpty();
     }
+  }
 
-    // Wire up events
-    refreshEl?.addEventListener('click', loadRegional);
-    monthEl?.addEventListener('change', loadRegional);
-    regionEl?.addEventListener('change', loadRegional);
+  // Events
+  refreshEl.addEventListener('click', load);
+  monthEl.addEventListener('change', load);
+  regionEl.addEventListener('change', load);
 
-    // Initial load
-    loadRegional();
-  })();
-  </script>
+  viewBtns.addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-view]');
+    if (!btn) return;
+    state.view = btn.dataset.view;       // currently visual only
+    setActive(viewBtns, 'view', state.view);
+    // If later you implement weekly/quarterly/ytd APIs, call load() here with different params.
+  });
+
+  rankBtns.addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-rank]');
+    if (!btn) return;
+    state.rankBy = btn.dataset.rank;     // sales | closing | ticket
+    setActive(rankBtns, 'rank', state.rankBy);
+    render(); // resort only
+  });
+
+  // Initial
+  load();
+})();
+</script>
 </body>
 </html>
