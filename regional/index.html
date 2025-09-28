@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Regional Performance Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>body{box-sizing:border-box}</style>
+</head>
+<body class="bg-gradient-to-br from-indigo-50 to-purple-100 min-h-screen">
+  <div class="container mx-auto px-4 py-6">
+    <!-- Header + toggles (unchanged markup) -->
+    <!-- ... keep your original header, view toggles, rank toggles ... -->
+
+    <!-- Cards, performance sections, tables (unchanged markup) -->
+    <!-- ... keep your original content ... -->
+
+    <!-- Franchise Management Modal (unchanged markup, but JS handler updated) -->
+    <div id="franchiseManagementModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+      <!-- ... keep original modal content and form fields ... -->
+    </div>
+
+    <!-- Other modals (unchanged markup) -->
+    <!-- ... -->
+  </div>
+
+  <script>
+    // Keep your entire franchises seed if you want immediate demo data:
+    let franchises = [ /* --- your original 12 franchise objects exactly as provided --- */ ];
+
+    let currentView = 'weekly';
+    let currentMonth = '2025-09';
+    let currentRankingCriteria = 'sales';
+    let franchiseIdCounter = 13;
+    let franchiseToDelete = null;
+
+    function initDashboard() {
+      renderDesignerTable();
+      renderTopPerformers();
+      setupEventListeners();
+      updateDesignerMetrics();
+    }
+
+    // keep all your existing functions (renderDesignerTable, renderTopPerformers, etc.)
+    // ...
+
+    // ========= UPDATED: Add new franchise (server-backed) =========
+    async function addFranchise(e) {
+      e.preventDefault();
+
+      const name = document.getElementById('newFranchiseName').value.trim();
+      const location = document.getElementById('newFranchiseLocation').value.trim();
+      const goal = parseInt(document.getElementById('newFranchiseGoal').value);
+      const designerCount = parseInt(document.getElementById('newFranchiseDesigners').value);
+
+      if (!name || !location || !goal || !designerCount) {
+        alert('Please fill in all fields');
+        return;
+      }
+
+      // 1) Create via server-side proxy (injects ADMIN_API_TOKEN)
+      const createRes = await fetch('/api/franchises/create-proxy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, location, region: 'PNW' })
+      });
+      const createData = await createRes.json();
+      if (!createRes.ok) {
+        alert(createData.error || 'Create failed');
+        return;
+      }
+
+      // 2) Seed initial designers + goals in the new franchise doc
+      const perDesignerGoal = Math.round(goal / designerCount);
+      const initialDesigners = Array.from({ length: designerCount }).map((_, i) => ({
+        id: Date.now() + i,
+        name: `Designer ${i + 1}`,
+        monthlySales: Math.round(perDesignerGoal * (0.8 + Math.random() * 0.6)),
+        weeklySales: 0,
+        appointments: 0,
+        salesClosed: 0,
+        monthlyGoal: perDesignerGoal
+      }));
+
+      await fetch(`/api/franchises/${encodeURIComponent(createData.franchise.slug)}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          designers: initialDesigners,
+          goalsByMonth: {
+            [currentMonth]: {
+              sales: goal,
+              conversion: 65,
+              ticket: 1800
+            }
+          }
+        })
+      });
+
+      // 3) Open Sales dashboard new tab
+      window.open(createData.salesUrl, "_blank");
+
+      // Optional: update your local demo list UI
+      franchises.push({
+        id: franchiseIdCounter++,
+        name,
+        location,
+        monthlySales: initialDesigners.reduce((s, d) => s + d.monthlySales, 0),
+        monthlyGoal: goal,
+        avgTicket: 1500,
+        conversionRate: 55,
+        designerCount,
+        topPerformer: initialDesigners.sort((a,b)=>b.monthlySales-a.monthlySales)[0].name,
+        trend: 'stable',
+        designers: initialDesigners
+      });
+
+      updateDesignerMetrics();
+      renderDesignerTable();
+      renderTopPerformers();
+      renderFranchiseManagementTable();
+      updateFranchiseFilterOptions();
+
+      document.getElementById('addFranchiseForm').reset();
+      alert(`Successfully added ${name}!`);
+      // keep modal open or close as you prefer
+    }
+
+    // Hook up listeners (keep your originals)
+    function setupEventListeners() {
+      // View toggles, rank toggles, buttons
+      document.getElementById('manageFranchisesBtn').addEventListener('click', () => {
+        renderFranchiseManagementTable();
+        showModal('franchiseManagementModal');
+      });
+
+      // Replace your old addFranchise binding (form submit):
+      document.getElementById('addFranchiseForm').addEventListener('submit', addFranchise);
+
+      // Keep the rest of your original event bindings (filters, export, delete, etc.)
+      // ...
+    }
+
+    // keep your helper functions: showModal, hideModal, updateDesignerMetrics, etc.
+    // ...
+
+    initDashboard();
+  </script>
+</body>
+</html>
