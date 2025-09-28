@@ -1,8 +1,8 @@
 {
-  "name": "dashboards",
+  "name": "franchise-dashboards",
   "private": true,
-  "type": "module",
+  "version": "1.0.0",
   "dependencies": {
-    "@vercel/kv": "1.0.1"
+    "@supabase/supabase-js": "latest"
   }
 }
