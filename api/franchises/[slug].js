@@ -1,31 +1,21 @@
-// /api/franchises/[slug].js
-import { kv } from "@vercel/kv";
+// api/franchises/[slug].js
+import { createClient } from "@supabase/supabase-js";
+
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE
+);
 
 export default async function handler(req, res) {
-  const slug = req.query.slug;
-  if (!slug) return res.status(400).json({ error: "Missing slug" });
+  const { slug } = req.query;
+  if (!slug) return res.status(400).json({ error: "slug is required" });
 
-  const key = `franchise:${slug}`;
-  const franchise = await kv.get(key);
+  const { data, error } = await supabase
+    .from("franchises")
+    .select("*")
+    .eq("slug", slug)
+    .single();
 
-  if (req.method === "GET") {
-    if (!franchise) return res.status(404).json({ error: "Not found" });
-    return res.status(200).json(franchise);
-  }
-
-  if (req.method === "PATCH") {
-    if (!franchise) return res.status(404).json({ error: "Not found" });
-    const body = req.body || {};
-    const updated = { ...franchise };
-
-    if (Array.isArray(body.designers)) updated.designers = body.designers;
-    if (body.goalsByMonth && typeof body.goalsByMonth === "object") {
-      updated.goalsByMonth = { ...updated.goalsByMonth, ...body.goalsByMonth };
-    }
-
-    await kv.set(key, updated);
-    return res.status(200).json({ ok: true, franchise: updated });
-  }
-
-  return res.status(405).json({ error: "Method not allowed" });
+  if (error) return res.status(404).json({ error: error.message });
+  return res.status(200).json(data);
 }
