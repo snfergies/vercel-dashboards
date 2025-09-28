@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Franchise Sales Performance Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>body{box-sizing:border-box}</style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+  <div class="container mx-auto px-4 py-6">
+    <!-- Header -->
+    <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+      <div class="flex justify-between items-center mb-4">
+        <div>
+          <h1 class="text-3xl font-bold text-gray-800">Sales Performance Dashboard</h1>
+          <p class="text-gray-600">Franchise Location: <span id="franchiseName">Downtown Store</span></p>
+        </div>
+        <div class="flex items-center space-x-4">
+          <select id="monthSelect" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+            <option value="2025-09" selected>September 2025</option>
+            <option value="2025-10">October 2025</option>
+            <option value="2025-11">November 2025</option>
+            <option value="2025-12">December 2025</option>
+          </select>
+          <button id="newMonthBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium">New Month</button>
+        </div>
+      </div>
+
+      <div class="flex space-x-2">
+        <button id="weeklyView" class="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium">Weekly</button>
+        <button id="monthlyView" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300">Monthly</button>
+        <button id="quarterlyView" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300">Quarterly</button>
+        <button id="ytdView" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300">YTD</button>
+      </div>
+    </div>
+
+    <!-- Franchise Goals -->
+    <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-bold text-gray-800">Franchise Goals</h2>
+        <button id="setFranchiseGoalsBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-medium">Set Goals</button>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="bg-blue-50 p-4 rounded-lg">
+          <h3 class="font-semibold text-blue-800 mb-2">Monthly Sales Goal</h3>
+          <p class="text-2xl font-bold text-blue-600" id="franchiseSalesGoal">$150,000</p>
+          <div class="mt-2">
+            <div class="text-sm text-blue-600">Current: $127,450</div>
+            <div class="w-full bg-blue-200 rounded-full h-2 mt-1">
+              <div class="bg-blue-600 h-2 rounded-full" style="width: 85%"></div>
+            </div>
+            <div class="text-xs text-blue-600 mt-1">85% of goal</div>
+          </div>
+        </div>
+        <div class="bg-green-50 p-4 rounded-lg">
+          <h3 class="font-semibold text-green-800 mb-2">Conversion Rate Goal</h3>
+          <p class="text-2xl font-bold text-green-600" id="franchiseConversionGoal">65%</p>
+          <div class="mt-2">
+            <div class="text-sm text-green-600">Current: 53.3%</div>
+            <div class="w-full bg-green-200 rounded-full h-2 mt-1">
+              <div class="bg-green-600 h-2 rounded-full" style="width: 82%"></div>
+            </div>
+            <div class="text-xs text-green-600 mt-1">82% of goal</div>
+          </div>
+        </div>
+        <div class="bg-purple-50 p-4 rounded-lg">
+          <h3 class="font-semibold text-purple-800 mb-2">Average Ticket Goal</h3>
+          <p class="text-2xl font-bold text-purple-600" id="franchiseTicketGoal">$1,800</p>
+          <div class="mt-2">
+            <div class="text-sm text-purple-600">Current: $1,625</div>
+            <div class="w-full bg-purple-200 rounded-full h-2 mt-1">
+              <div class="bg-purple-600 h-2 rounded-full" style="width: 90%"></div>
+            </div>
+            <div class="text-xs text-purple-600 mt-1">90% of goal</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Designer Management -->
+    <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-bold text-gray-800">Designer Management</h2>
+        <div class="flex space-x-3">
+          <button id="addDesignerBtn" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium">+ Add Designer</button>
+          <button id="uploadGoalsBtn" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-medium">Upload Goals</button>
+          <button id="updateProgressBtn" class="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg font-medium">Update Progress</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Performance Table -->
+    <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+      <div class="p-6 border-b border-gray-200">
+        <h2 class="text-xl font-bold text-gray-800">Designer Performance - <span id="currentViewTitle">Weekly View</span></h2>
+        <p class="text-gray-600">Current Period: <span id="currentPeriod">Week of September 2-8, 2025</span></p>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Designer</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Monthly Sales</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sales Rank</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Avg Ticket</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Closing Rate</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Appointments</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sales Closed</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Monthly Goal</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">% of Goal</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">vs Franchise Goals</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="designerTableBody" class="bg-white divide-y divide-gray-200"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Regional Comparison (unchanged markup) -->
+    <div class="bg-white rounded-lg shadow-lg p-6 mt-6">
+      <!-- ... keep your existing Regional Comparison section exactly as in your file ... -->
+      <!-- omitted for brevity (UI only) -->
+    </div>
+  </div>
+
+  <!-- Modals (keep your original modal markup exactly as-is) -->
+  <!-- Add Designer Modal -->
+  <div id="addDesignerModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <!-- ... keep original modal content ... -->
+  </div>
+
+  <!-- Edit, Upload Goals, Update Progress, New Month, Delete Designer, Franchise Goals modals -->
+  <!-- ... keep the rest of your original modal markup exactly as in your file ... -->
+
+  <script>
+    // ===== NEW: franchise bootstrap helpers =====
+    const urlParams = new URLSearchParams(window.location.search);
+    const FRANCHISE_SLUG = urlParams.get("franchise") || "downtown-store";
+
+    async function fetchFranchise() {
+      const res = await fetch(`/api/franchises/${encodeURIComponent(FRANCHISE_SLUG)}`);
+      if (!res.ok) return null;
+      return res.json();
+    }
+
+    async function saveFranchisePatch(patch) {
+      const res = await fetch(`/api/franchises/${encodeURIComponent(FRANCHISE_SLUG)}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(patch)
+      });
+      return res.json();
+    }
+
+    // ===== Original script with minimal changes =====
+    let designers = []; // (loaded from backend)
+    let currentView = 'weekly';
+    let currentMonth = '2025-09';
+    let editingDesignerId = null;
+    let deletingDesignerId = null;
+
+    // Franchise goals (defaults; may be overridden from backend)
+    let franchiseGoals = {
+      salesGoal: 150000,
+      conversionGoal: 65,
+      ticketGoal: 1800
+    };
+
+    async function bootstrapFranchiseState() {
+      const f = await fetchFranchise();
+      if (f) {
+        document.getElementById('franchiseName').textContent = f.name || FRANCHISE_SLUG;
+        designers = Array.isArray(f.designers) ? f.designers : [];
+        if (f.goalsByMonth && f.goalsByMonth[currentMonth]) {
+          const g = f.goalsByMonth[currentMonth];
+          franchiseGoals = {
+            salesGoal: g.sales ?? franchiseGoals.salesGoal,
+            conversionGoal: g.conversion ?? franchiseGoals.conversionGoal,
+            ticketGoal: g.ticket ?? franchiseGoals.ticketGoal
+          };
+        }
+        updateFranchiseGoalsDisplay();
+      }
+    }
+
+    // ===== Your original functions, mostly unchanged =====
+    function initDashboard() {
+      // made async to allow bootstrap
+      (async () => {
+        await bootstrapFranchiseState();
+        renderDesignerTable();
+        renderRegionalRankings();
+        setupEventListeners();
+      })();
+    }
+
+    function renderDesignerTable() {
+      const tbody = document.getElementById('designerTableBody');
+      tbody.innerHTML = '';
+
+      designers.forEach(designer => {
+        const avgTicket = designer.salesClosed > 0 ? (designer.weeklySales / designer.salesClosed).toFixed(0) : 0;
+        const closingRate = designer.appointments > 0 ? ((designer.salesClosed / designer.appointments) * 100).toFixed(1) : 0;
+        const goalPercentage = ((designer.monthlySales / designer.monthlyGoal) * 100).toFixed(1);
+        const sortedDesigners = [...designers].sort((a, b) => b.monthlySales - a.monthlySales);
+        const salesRank = sortedDesigners.findIndex(d => d.id === designer.id) + 1;
+
+        const getGoalColor = (percentage) => {
+          if (percentage >= 100) return 'text-green-600 font-semibold';
+          if (percentage >= 80) return 'text-yellow-600 font-medium';
+          return 'text-red-600';
+        };
+
+        const ticketVsGoal = franchiseGoals.ticketGoal > 0 ? ((avgTicket / franchiseGoals.ticketGoal) * 100).toFixed(0) : 0;
+        const closingVsGoal = franchiseGoals.conversionGoal > 0 ? ((closingRate / franchiseGoals.conversionGoal) * 100).toFixed(0) : 0;
+
+        const row = document.createElement('tr');
+        row.className = 'hover:bg-gray-50';
+        row.innerHTML = `
+          <td class="px-6 py-4 whitespace-nowrap"><div class="font-medium text-gray-900">${designer.name}</div></td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">$${designer.monthlySales.toLocaleString()}</td>
+          <td class="px-6 py-4 whitespace-nowrap text-center">
+            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${salesRank === 1 ? 'bg-gold-100 text-gold-800' : salesRank <= 2 ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}">#${salesRank}</span>
+            <div class="text-xs text-gray-500 mt-1">of ${designers.length}</div>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm">
+            <div class="text-gray-900">$${avgTicket}</div>
+            <div class="text-xs ${getGoalColor(ticketVsGoal)}">${ticketVsGoal}% of goal</div>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm">
+            <div class="text-gray-900">${closingRate}%</div>
+            <div class="text-xs ${getGoalColor(closingVsGoal)}">${closingVsGoal}% of goal</div>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${designer.appointments}</td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${designer.salesClosed}</td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">$${designer.monthlyGoal.toLocaleString()}</td>
+          <td class="px-6 py-4 whitespace-nowrap">
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${goalPercentage >= 100 ? 'bg-green-100 text-green-800' : goalPercentage >= 75 ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'}">${goalPercentage}%</span>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm">
+            <div class="space-y-1">
+              <div class="flex items-center space-x-2"><span class="text-xs text-gray-500">Ticket:</span><span class="text-xs ${getGoalColor(ticketVsGoal)}">${ticketVsGoal}%</span></div>
+              <div class="flex items-center space-x-2"><span class="text-xs text-gray-500">Close:</span><span class="text-xs ${getGoalColor(closingVsGoal)}">${closingVsGoal}%</span></div>
+              <div class="flex items-center space-x-2"><span class="text-xs text-gray-500">Rank:</span><span class="text-xs font-medium">#${salesRank}</span></div>
+            </div>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+            <div class="flex space-x-3">
+              <button class="edit-designer-btn text-blue-600 hover:text-blue-900" data-designer-id="${designer.id}">Edit</button>
+              <button class="delete-designer-btn text-red-600 hover:text-red-900" data-designer-id="${designer.id}">Delete</button>
+            </div>
+          </td>
+        `;
+        tbody.appendChild(row);
+      });
+
+      document.querySelectorAll('.edit-designer-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const designerId = parseInt(e.target.dataset.designerId);
+          editDesigner(designerId);
+        });
+      });
+
+      document.querySelectorAll('.delete-designer-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const designerId = parseInt(e.target.dataset.designerId);
+          showDeleteConfirmation(designerId);
+        });
+      });
+    }
+
+    function renderRegionalRankings() {
+      // keep your original simulated rankings logic if you want
+    }
+
+    function setupEventListeners() {
+      document.getElementById('weeklyView').addEventListener('click', () => switchView('weekly'));
+      document.getElementById('monthlyView').addEventListener('click', () => switchView('monthly'));
+      document.getElementById('quarterlyView').addEventListener('click', () => switchView('quarterly'));
+      document.getElementById('ytdView').addEventListener('click', () => switchView('ytd'));
+
+      document.getElementById('addDesignerBtn').addEventListener('click', () => showModal('addDesignerModal'));
+      document.getElementById('uploadGoalsBtn').addEventListener('click', () => showUploadGoalsModal());
+      document.getElementById('updateProgressBtn').addEventListener('click', () => showUpdateProgressModal());
+      document.getElementById('newMonthBtn').addEventListener('click', () => showModal('newMonthModal'));
+      document.getElementById('setFranchiseGoalsBtn').addEventListener('click', () => showFranchiseGoalsModal());
+
+      document.getElementById('monthSelect').addEventListener('change', async (e) => {
+        currentMonth = e.target.value;
+        await bootstrapFranchiseState();
+        renderDesignerTable();
+      });
+
+      // You'll also keep all your modal form handlers here (unchanged)...
+      // BUT we update two to persist to backend: handleSaveGoals & handleSaveProgress
+      document.getElementById('saveGoals')?.addEventListener('click', handleSaveGoals);
+      document.getElementById('saveProgress')?.addEventListener('click', handleSaveProgress);
+    }
+
+    function switchView(view) {
+      currentView = view;
+      document.querySelectorAll('[id$="View"]').forEach(btn => {
+        btn.className = 'px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300';
+      });
+      document.getElementById(view + 'View').className = 'px-4 py-2 bg-blue-600 text-white rounded-lg font-medium';
+
+      const titles = { weekly: 'Weekly View', monthly: 'Monthly View', quarterly: 'Quarterly View', ytd: 'Year-to-Date View' };
+      const periods = {
+        weekly: 'Week of September 2-8, 2025',
+        monthly: 'September 2025',
+        quarterly: 'Q3 2025',
+        ytd: 'January - September 2025'
+      };
+      document.getElementById('currentViewTitle').textContent = titles[view];
+      document.getElementById('currentPeriod').textContent = periods[view];
+    }
+
+    // ====== IMPORTANT CHANGES: persist to backend ======
+    async function handleSaveGoals() {
+      // existing logic: read inputs and update designers' monthlyGoal locally (keep your code)
+      // After updating 'designers', persist goals + designers:
+      await saveFranchisePatch({
+        designers,
+        goalsByMonth: {
+          [currentMonth]: {
+            sales: franchiseGoals.salesGoal,
+            conversion: franchiseGoals.conversionGoal,
+            ticket: franchiseGoals.ticketGoal
+          }
+        }
+      });
+      renderDesignerTable();
+      // close modal via your existing code
+    }
+
+    async function handleSaveProgress() {
+      // existing logic: update designers' weekly/monthly fields from the modal inputs (keep your code)
+      // Compute totals for reporting:
+      const totals = {
+        sales: designers.reduce((s, d) => s + (d.monthlySales || 0), 0),
+        appointments: designers.reduce((s, d) => s + (d.appointments || 0), 0),
+        closed: designers.reduce((s, d) => s + (d.salesClosed || 0), 0)
+      };
+      const derived = {
+        avgTicket: totals.closed > 0 ? Math.round(totals.sales / totals.closed) : 0,
+        conversion: totals.appointments > 0 ? Math.round((totals.closed / totals.appointments) * 1000) / 10 : 0
+      };
+
+      // Save local franchise doc:
+      await saveFranchisePatch({
+        designers,
+        goalsByMonth: {
+          [currentMonth]: {
+            sales: franchiseGoals.salesGoal,
+            conversion: franchiseGoals.conversionGoal,
+            ticket: franchiseGoals.ticketGoal
+          }
+        }
+      });
+
+      // Report via secure server-side proxy (no tokens in browser):
+      await fetch("/api/metrics/ingest-proxy", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          franchise: FRANCHISE_SLUG,
+          month: currentMonth,
+          data: { designers, totals, derived },
+          goals: franchiseGoals
+        })
+      }).catch(() => {});
+
+      renderDesignerTable();
+      // close modal via your existing code
+    }
+
+    function updateFranchiseGoalsDisplay() {
+      document.getElementById('franchiseSalesGoal').textContent = '$' + franchiseGoals.salesGoal.toLocaleString();
+      document.getElementById('franchiseConversionGoal').textContent = franchiseGoals.conversionGoal + '%';
+      document.getElementById('franchiseTicketGoal').textContent = '$' + franchiseGoals.ticketGoal.toLocaleString();
+      const currentSales = 127450;
+      const currentConversion = 53.3;
+      const currentTicket = 1625;
+      const salesProgress = Math.min((currentSales / franchiseGoals.salesGoal) * 100, 100);
+      const conversionProgress = Math.min((currentConversion / franchiseGoals.conversionGoal) * 100, 100);
+      const ticketProgress = Math.min((currentTicket / franchiseGoals.ticketGoal) * 100, 100);
+
+      document.querySelector('.bg-blue-50 .bg-blue-600').style.width = salesProgress + '%';
+      document.querySelector('.bg-blue-50 .text-xs').textContent = Math.round(salesProgress) + '% of goal';
+      document.querySelector('.bg-green-50 .bg-green-600').style.width = conversionProgress + '%';
+      document.querySelector('.bg-green-50 .text-xs').textContent = Math.round(conversionProgress) + '% of goal';
+      document.querySelector('.bg-purple-50 .bg-purple-600').style.width = ticketProgress + '%';
+      document.querySelector('.bg-purple-50 .text-xs').textContent = Math.round(ticketProgress) + '% of goal';
+    }
+
+    // (Keep: show/hide modal helpers, edit/delete designer, new month, etc.)
+    // ... your original functions here ...
+
+    // Initialize
+    initDashboard();
+  </script>
+</body>
+</html>
