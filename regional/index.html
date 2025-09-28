@@ -1,387 +1,587 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Regional Performance Dashboard</title>
-  <!-- Tailwind (fine for a quick dashboard) -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    .btn { @apply px-3 py-1.5 rounded-md border text-sm transition; }
-    .btn-ghost { @apply border-slate-200 bg-white hover:bg-slate-50; }
-    .btn-active { @apply bg-indigo-600 text-white border-indigo-600; }
-    .chip { @apply px-2 py-0.5 rounded-full text-xs font-medium; }
-    .number-skel { @apply h-4 w-16 rounded bg-slate-200 animate-pulse inline-block; }
-    .row-skel { @apply h-4 w-full rounded bg-slate-200 animate-pulse; }
-  </style>
 </head>
-<body class="bg-slate-50">
-  <main class="max-w-7xl mx-auto p-4 sm:p-6">
-    <!-- Header / Controls -->
-    <section class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 sm:p-6 mb-6">
-      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+<body class="bg-slate-50 text-slate-800">
+
+  <!-- Page wrapper -->
+  <div class="max-w-7xl mx-auto p-4 md:p-6">
+    <!-- Header -->
+    <div class="bg-white shadow-sm rounded-xl p-5 md:p-6">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 class="text-2xl sm:text-3xl font-semibold text-slate-900">Regional Performance Dashboard</h1>
-          <p class="text-slate-500 mt-0.5" id="regionLabel">Canada Region</p>
+          <h1 class="text-2xl md:text-3xl font-bold">Regional Performance Dashboard</h1>
+          <div class="mt-2 text-sm text-slate-600">Canada Region</div>
         </div>
 
-        <div class="flex items-center gap-2">
-          <!-- Month -->
-          <select id="monthSelect" class="btn btn-ghost">
-            <!-- Filled by JS (current month and a few neighbors) -->
+        <div class="flex flex-wrap items-center gap-3">
+          <select id="monthSelect" class="px-3 py-2 border rounded-lg">
+            <!-- Filled at runtime with months -->
           </select>
-
-          <!-- Region -->
-          <select id="regionSelect" class="btn btn-ghost">
+          <select id="regionSelect" class="px-3 py-2 border rounded-lg">
             <option value="canada" selected>Canada</option>
-            <option value="pnw">PNW</option>
-            <option value="northeast">Northeast</option>
           </select>
-
-          <!-- Refresh -->
-          <button id="refreshBtn" class="btn btn-active">Refresh</button>
+          <button id="refreshBtn"
+                  class="px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700">
+            Refresh
+          </button>
         </div>
       </div>
 
       <!-- View + Rank toggles -->
-      <div class="mt-4 flex items-center justify-between gap-4">
-        <div class="flex gap-2" id="viewGroup" role="tablist" aria-label="View range">
-          <button class="btn btn-ghost" data-view="weekly">Weekly</button>
-          <button class="btn btn-active" data-view="monthly">Monthly</button>
-          <button class="btn btn-ghost" data-view="quarterly">Quarterly</button>
-          <button class="btn btn-ghost" data-view="ytd">YTD</button>
+      <div class="mt-5 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+        <div class="flex items-center gap-2">
+          <button data-view="weekly"   class="view-btn px-3 py-1.5 rounded-lg border bg-white">Weekly</button>
+          <button data-view="monthly"  class="view-btn px-3 py-1.5 rounded-lg border bg-indigo-600 text-white">Monthly</button>
+          <button data-view="quarterly"class="view-btn px-3 py-1.5 rounded-lg border bg-white">Quarterly</button>
+          <button data-view="ytd"      class="view-btn px-3 py-1.5 rounded-lg border bg-white">YTD</button>
         </div>
 
         <div class="flex items-center gap-2">
-          <span class="text-slate-600 text-sm">Rank by:</span>
-          <div id="rankGroup" class="flex gap-2" role="tablist" aria-label="Rank metric">
-            <button class="btn btn-active" data-rank="sales">Sales</button>
-            <button class="btn btn-ghost" data-rank="closing">Closing Rate</button>
-            <button class="btn btn-ghost" data-rank="ticket">Avg Ticket</button>
-          </div>
+          <span class="text-sm text-slate-600">Rank by:</span>
+          <button data-rank="sales"       class="rank-btn px-3 py-1.5 rounded-lg border bg-green-100 text-green-800">Sales</button>
+          <button data-rank="closingRate" class="rank-btn px-3 py-1.5 rounded-lg border bg-white">Closing Rate</button>
+          <button data-rank="avgTicket"   class="rank-btn px-3 py-1.5 rounded-lg border bg-white">Avg Ticket</button>
         </div>
       </div>
-    </section>
+    </div>
 
     <!-- KPI Cards -->
-    <section class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-      <!-- Total designers -->
-      <article class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
-        <p class="text-slate-500 text-sm">Total Active Designers</p>
-        <p id="kpiDesigners" class="text-2xl font-semibold text-slate-900 mt-2"><span class="number-skel"></span></p>
-      </article>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+      <div class="bg-white rounded-xl shadow-sm p-5">
+        <div class="text-sm text-slate-500">Total Active Designers</div>
+        <div id="kpiDesigners" class="mt-2 text-3xl font-bold">--</div>
+      </div>
+      <div class="bg-white rounded-xl shadow-sm p-5">
+        <div class="text-sm text-slate-500">Avg Designer Performance</div>
+        <div id="kpiPerformance" class="mt-2 text-3xl font-bold">--</div>
+      </div>
+      <div class="bg-white rounded-xl shadow-sm p-5">
+        <div class="text-sm text-slate-500">Avg Sales Per Designer</div>
+        <div id="kpiAvgSales" class="mt-2 text-3xl font-bold">--</div>
+      </div>
+    </div>
 
-      <!-- Avg Designer Performance (simple label) -->
-      <article class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
-        <p class="text-slate-500 text-sm">Avg Designer Performance</p>
-        <p id="kpiPerf" class="text-2xl font-semibold text-slate-900 mt-2"><span class="number-skel"></span></p>
-      </article>
+    <!-- Performance tracking -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+      <div class="bg-white rounded-xl shadow-sm p-5">
+        <div class="text-sm text-slate-500">Average Conversion Rate</div>
+        <div id="trendConversion" class="mt-2 text-2xl font-semibold">--</div>
+        <div id="trendConversionPrev" class="text-xs text-slate-500">Previous Month: —</div>
+      </div>
+      <div class="bg-white rounded-xl shadow-sm p-5">
+        <div class="text-sm text-slate-500">Average Ticket Value</div>
+        <div id="trendTicket" class="mt-2 text-2xl font-semibold">--</div>
+        <div id="trendTicketPrev" class="text-xs text-slate-500">Previous Month: —</div>
+      </div>
+      <div class="bg-white rounded-xl shadow-sm p-5">
+        <div class="text-sm text-slate-500">Average Appointments</div>
+        <div id="trendAppts" class="mt-2 text-2xl font-semibold">--</div>
+        <div class="text-xs text-slate-500">Per designer / month</div>
+      </div>
+    </div>
 
-      <!-- Avg sales per designer -->
-      <article class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
-        <p class="text-slate-500 text-sm">Avg Sales Per Designer</p>
-        <p id="kpiAvgSales" class="text-2xl font-semibold text-slate-900 mt-2"><span class="number-skel"></span></p>
-      </article>
-    </section>
-
-    <!-- Rankings table -->
-    <section class="bg-white rounded-xl shadow-sm border border-slate-200">
-      <header class="p-5 border-b border-slate-200 flex items-center justify-between">
+    <!-- Table + Actions -->
+    <div class="bg-white rounded-xl shadow-sm p-5 mt-4">
+      <div class="flex items-center justify-between mb-4">
         <div>
-          <h2 class="text-lg font-semibold text-slate-900">Regional Designer Performance Rankings</h2>
-          <p id="periodLabel" class="text-sm text-slate-500">Current Period</p>
+          <div class="font-semibold">Regional Designer Performance Rankings</div>
+          <div id="periodLabel" class="text-xs text-slate-500">Current Period: —</div>
         </div>
-        <span id="rankBadge" class="chip bg-indigo-100 text-indigo-800">Ranked by Sales</span>
-      </header>
+        <div class="flex items-center gap-3">
+          <button id="manageLocationsBtn"
+                  class="px-4 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700">
+            Manage Locations
+          </button>
+          <button id="filterDesignersBtn"
+                  class="px-4 py-2 rounded-lg bg-violet-600 text-white hover:bg-violet-700">
+            Filter Designers
+          </button>
+          <button id="exportBtn"
+                  class="px-4 py-2 rounded-lg bg-slate-800 text-white hover:bg-slate-900">
+            Export Data
+          </button>
+        </div>
+      </div>
 
       <div class="overflow-x-auto">
-        <table class="min-w-full text-sm">
-          <thead class="bg-slate-50 text-slate-600">
+        <table class="w-full text-sm">
+          <thead class="bg-slate-50">
             <tr>
-              <th class="text-left font-medium px-5 py-3">Rank</th>
-              <th class="text-left font-medium px-5 py-3">Designer</th>
-              <th class="text-left font-medium px-5 py-3">Franchise Location</th>
-              <th class="text-right font-medium px-5 py-3">Monthly Sales</th>
-              <th class="text-right font-medium px-5 py-3">Avg Ticket</th>
-              <th class="text-right font-medium px-5 py-3">Closing Rate</th>
-              <th class="text-right font-medium px-5 py-3">Appointments</th>
-              <th class="text-right font-medium px-5 py-3">Sales Closed</th>
+              <th class="text-left px-3 py-2">RANK</th>
+              <th class="text-left px-3 py-2">DESIGNER</th>
+              <th class="text-left px-3 py-2">FRANCHISE LOCATION</th>
+              <th class="text-left px-3 py-2">MONTHLY SALES</th>
+              <th class="text-left px-3 py-2">AVG TICKET</th>
+              <th class="text-left px-3 py-2">CONVERSION RATE</th>
+              <th class="text-left px-3 py-2">PERFORMANCE</th>
+              <th class="text-left px-3 py-2">ACTIONS</th>
             </tr>
           </thead>
-          <tbody id="rankBody" class="divide-y divide-slate-100">
-            <!-- Filled by JS -->
-            <tr class="odd:bg-white even:bg-slate-50">
-              <td class="px-5 py-3" colspan="8">
-                <div class="row-skel"></div>
-              </td>
-            </tr>
-            <tr class="odd:bg-white even:bg-slate-50">
-              <td class="px-5 py-3" colspan="8">
-                <div class="row-skel"></div>
-              </td>
-            </tr>
-            <tr class="odd:bg-white even:bg-slate-50">
-              <td class="px-5 py-3" colspan="8">
-                <div class="row-skel"></div>
-              </td>
-            </tr>
+          <tbody id="rankingsBody" class="divide-y">
+            <!-- rows injected here -->
           </tbody>
         </table>
       </div>
-    </section>
-  </main>
+    </div>
+  </div>
+
+  <!-- Manage Locations Modal -->
+  <div id="locationsModal"
+       class="fixed inset-0 bg-black/40 hidden items-center justify-center z-50">
+    <div class="bg-white w-[95%] max-w-2xl rounded-xl shadow-xl">
+      <div class="p-5 border-b flex items-center justify-between">
+        <h3 class="font-semibold text-lg">Manage Franchise Locations</h3>
+        <button id="closeLocationsModal" class="text-slate-500 hover:text-slate-800">&times;</button>
+      </div>
+
+      <div class="p-5 space-y-4">
+        <!-- Add form -->
+        <form id="addLocationForm" class="grid grid-cols-1 md:grid-cols-4 gap-3">
+          <div>
+            <label class="text-xs text-slate-600">Slug</label>
+            <input required id="locSlug" placeholder="e.g. tierney"
+                   class="mt-1 w-full px-3 py-2 border rounded-lg" />
+            <p class="text-[11px] text-slate-500 mt-1">
+              Lowercase, hyphenated, unique (e.g. <code>vancouver-downtown</code>)
+            </p>
+          </div>
+          <div>
+            <label class="text-xs text-slate-600">Name</label>
+            <input required id="locName" placeholder="Team Tierney"
+                   class="mt-1 w-full px-3 py-2 border rounded-lg"/>
+          </div>
+          <div>
+            <label class="text-xs text-slate-600">City</label>
+            <input required id="locCity" placeholder="Tri-Cities"
+                   class="mt-1 w-full px-3 py-2 border rounded-lg"/>
+          </div>
+          <div>
+            <label class="text-xs text-slate-600">Province</label>
+            <input required id="locProvince" placeholder="BC"
+                   class="mt-1 w-full px-3 py-2 border rounded-lg"/>
+          </div>
+          <div class="md:col-span-4">
+            <button class="w-full md:w-auto px-4 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700">
+              Save Location
+            </button>
+          </div>
+        </form>
+
+        <!-- Status -->
+        <div id="locStatus" class="hidden text-sm"></div>
+
+        <!-- Existing locations -->
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <h4 class="font-semibold">Existing Locations</h4>
+            <button id="reloadLocations"
+                    class="px-3 py-1.5 rounded-lg border hover:bg-slate-50">
+              Reload
+            </button>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead class="bg-slate-50">
+                <tr>
+                  <th class="text-left px-3 py-2">Slug</th>
+                  <th class="text-left px-3 py-2">Name</th>
+                  <th class="text-left px-3 py-2">City</th>
+                  <th class="text-left px-3 py-2">Province</th>
+                  <th class="text-left px-3 py-2">Created</th>
+                </tr>
+              </thead>
+              <tbody id="locationsBody" class="divide-y">
+                <!-- rows injected -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="p-5 border-t flex justify-end">
+        <button id="closeLocationsModal2"
+                class="px-4 py-2 rounded-lg border hover:bg-slate-50">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast"
+       class="fixed bottom-4 left-1/2 -translate-x-1/2 hidden bg-slate-900 text-white text-sm px-4 py-2 rounded-lg shadow-lg">
+    Saved!
+  </div>
 
   <script>
-    // ------------------------------
-    // Small state store
-    // ------------------------------
+    /***********************
+     * Page State
+     ***********************/
     const state = {
-      view: 'monthly',      // weekly | monthly | quarterly | ytd
-      rank: 'sales',        // sales | closing | ticket
-      month: '',            // YYYY-MM (derived from dropdown)
-      region: 'canada',     // region slug (dropdown)
-      data: null            // last API payload
+      view: 'monthly',         // weekly | monthly | quarterly | ytd (UI only)
+      rankBy: 'sales',         // sales | closingRate | avgTicket (UI only)
+      region: 'canada',
+      month: '',               // YYYY-MM
+      data: null               // latest payload from /api/metrics/region
     };
 
-    // ------------------------------
-    // Helpers
-    // ------------------------------
-    const $ = (sel) => document.querySelector(sel);
-    const $$ = (sel) => Array.from(document.querySelectorAll(sel));
+    /***********************
+     * Helpers
+     ***********************/
+    const $ = sel => document.querySelector(sel);
+    const $$ = sel => Array.from(document.querySelectorAll(sel));
+
+    function showToast(msg = 'Saved!') {
+      const el = $('#toast');
+      el.textContent = msg;
+      el.classList.remove('hidden');
+      setTimeout(() => el.classList.add('hidden'), 2000);
+    }
+
+    function setBusy(el, busy) {
+      if (busy) {
+        el.setAttribute('disabled', 'true');
+        el.classList.add('opacity-60', 'cursor-not-allowed');
+      } else {
+        el.removeAttribute('disabled');
+        el.classList.remove('opacity-60', 'cursor-not-allowed');
+      }
+    }
 
     function formatMoney(n) {
-      if (n == null || isNaN(n)) return '—';
-      return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(n);
+      if (n == null || isNaN(n)) return '--';
+      return n.toLocaleString(undefined, { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
     }
+
     function pct(n) {
-      if (n == null || isNaN(n)) return '—';
-      return `${(n * 100).toFixed(1)}%`;
+      if (n == null || isNaN(n)) return '--';
+      return `${n.toFixed(1)}%`;
     }
 
-    // Build the month select options (current ± 3 months)
-    function initMonthSelect() {
-      const sel = $('#monthSelect');
-      sel.innerHTML = '';
+    function monthOptions() {
+      // Simple: current month + 11 previous
+      const out = [];
       const now = new Date();
-      const months = [];
-      for (let i = -3; i <= 3; i++) {
-        const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
-        const value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-        const label = d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-        months.push({ value, label });
+      for (let i = 0; i < 12; i++) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const ym = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+        const label = d.toLocaleString(undefined, { month: 'long', year: 'numeric' });
+        out.push({ value: ym, label });
       }
-      months.forEach(m => {
-        const opt = document.createElement('option');
-        opt.value = m.value;
-        opt.textContent = m.label;
-        if (m.value === `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`) opt.selected = true;
-        sel.appendChild(opt);
-      });
-      state.month = sel.value;
-      updatePeriodLabel();
+      return out;
     }
 
-    function updateActive(groupEl, activeAttr, value) {
-      groupEl.querySelectorAll('button').forEach(btn => {
-        const on = btn.dataset[activeAttr] === value;
-        btn.classList.toggle('btn-active', on);
-        btn.classList.toggle('btn-ghost', !on);
-        btn.setAttribute('aria-pressed', on ? 'true' : 'false');
-      });
-    }
-
-    function updatePeriodLabel() {
-      // Simple label based on view + month
-      const monthLabel = new Date(state.month + '-01').toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-      let label = monthLabel;
-      if (state.view === 'weekly') label = `Week of ${monthLabel}`;
-      if (state.view === 'quarterly') label = `Quarter of ${monthLabel}`;
-      if (state.view === 'ytd') label = `Year-to-date of ${monthLabel}`;
-      $('#periodLabel').textContent = label;
-    }
-
-    function setLoading(isLoading) {
-      $('#kpiDesigners').innerHTML = isLoading ? '<span class="number-skel"></span>' : '';
-      $('#kpiPerf').innerHTML       = isLoading ? '<span class="number-skel"></span>' : '';
-      $('#kpiAvgSales').innerHTML   = isLoading ? '<span class="number-skel"></span>' : '';
-      if (isLoading) {
-        $('#rankBody').innerHTML = `
-          <tr class="odd:bg-white even:bg-slate-50"><td class="px-5 py-3" colspan="8"><div class="row-skel"></div></td></tr>
-          <tr class="odd:bg-white even:bg-slate-50"><td class="px-5 py-3" colspan="8"><div class="row-skel"></div></td></tr>
-          <tr class="odd:bg-white even:bg-slate-50"><td class="px-5 py-3" colspan="8"><div class="row-skel"></div></td></tr>
-        `;
-      }
-    }
-
-    // ------------------------------
-    // API + Data shaping
-    // ------------------------------
-    async function fetchRegionData() {
-      // For now, all views call the same endpoint with ?month=YYYY-MM
-      // (If you later add weekly/quarterly/ytd server logic, pass extra params like view=weekly)
-      const url = new URL('/api/metrics/region', window.location.origin);
-      url.searchParams.set('region', state.region);
-      url.searchParams.set('month', state.month);
-
-      const res = await fetch(url.toString());
-      if (!res.ok) {
-        throw new Error(`API ${res.status}`);
-      }
-      return res.json();
-    }
-
-    function flattenDesigners(payload) {
-      // payload = { slug: { totals: {...}, designers: [...] }, ... }
-      const rows = [];
-      for (const [slug, block] of Object.entries(payload || {})) {
-        (block.designers || []).forEach(d => {
-          // expect d.monthlySales, appointments, salesClosed, avgTicket
-          const closingRate = d.appointments > 0 ? (d.salesClosed / d.appointments) : 0;
-          rows.push({
-            franchiseSlug: slug,
-            franchiseName: slug.replace(/-/g, ' '),
-            name: d.name,
-            monthlySales: d.monthlySales ?? 0,
-            avgTicket: d.avgTicket ?? 0,
-            appointments: d.appointments ?? 0,
-            salesClosed: d.salesClosed ?? 0,
-            closingRate
-          });
-        });
-      }
-      return rows;
-    }
-
-    function sortRows(rows) {
-      const metric = state.rank; // sales | closing | ticket
-      const key = metric === 'sales' ? 'monthlySales' : (metric === 'closing' ? 'closingRate' : 'avgTicket');
-      return rows.sort((a, b) => (b[key] ?? 0) - (a[key] ?? 0));
-    }
-
-    // ------------------------------
-    // Render
-    // ------------------------------
-    function renderKPIs(rows) {
-      const totalDesigners = rows.length;
-      const avgSales = totalDesigners ? rows.reduce((s, r) => s + (r.monthlySales ?? 0), 0) / totalDesigners : 0;
-
-      // Simple "performance label" based on rank metric
-      const perfLabel = totalDesigners
-        ? (avgSales >= 40000 ? 'Great' : avgSales >= 25000 ? 'Good' : 'Okay')
-        : '—';
-
-      $('#kpiDesigners').textContent = totalDesigners || '—';
-      $('#kpiPerf').textContent = perfLabel;
-      $('#kpiAvgSales').textContent = formatMoney(avgSales);
-    }
-
-    function renderTable(rows) {
-      const body = $('#rankBody');
-      if (!rows.length) {
-        body.innerHTML = `
-          <tr><td class="px-5 py-6 text-slate-500" colspan="8">No designers found for this period.</td></tr>
-        `;
-        return;
-      }
-
-      const metricLabel = state.rank === 'sales' ? 'Sales' : (state.rank === 'closing' ? 'Closing Rate' : 'Avg Ticket');
-      $('#rankBadge').textContent = `Ranked by ${metricLabel}`;
-
-      body.innerHTML = rows.map((r, i) => `
-        <tr class="odd:bg-white even:bg-slate-50">
-          <td class="px-5 py-3 text-slate-600">${i + 1}</td>
-          <td class="px-5 py-3 font-medium text-slate-900">${r.name}</td>
-          <td class="px-5 py-3 text-slate-700">${r.franchiseName}</td>
-          <td class="px-5 py-3 text-right">${formatMoney(r.monthlySales)}</td>
-          <td class="px-5 py-3 text-right">${formatMoney(r.avgTicket)}</td>
-          <td class="px-5 py-3 text-right">${pct(r.closingRate)}</td>
-          <td class="px-5 py-3 text-right">${r.appointments ?? 0}</td>
-          <td class="px-5 py-3 text-right">${r.salesClosed ?? 0}</td>
-        </tr>
-      `).join('');
-    }
-
-    async function loadAndRender() {
-      setLoading(true);
-      try {
-        const payload = await fetchRegionData();
-        state.data = payload;
-
-        const rows = sortRows(flattenDesigners(payload));
-        renderKPIs(rows);
-        renderTable(rows);
-      } catch (err) {
-        console.error(err);
-        $('#kpiDesigners').textContent = '—';
-        $('#kpiPerf').textContent = '—';
-        $('#kpiAvgSales').textContent = '—';
-        $('#rankBody').innerHTML = `
-          <tr><td class="px-5 py-6 text-rose-600" colspan="8">API error. Check route or env vars.</td></tr>
-        `;
-      } finally {
-        // nothing
-      }
-    }
-
-    // ------------------------------
-    // Event wiring
-    // ------------------------------
-    function wireEvents() {
-      // Month / Region / Refresh
-      $('#monthSelect').addEventListener('change', () => {
-        state.month = $('#monthSelect').value;
-        updatePeriodLabel();
-        loadAndRender();
-      });
-
-      $('#regionSelect').addEventListener('change', () => {
-        state.region = $('#regionSelect').value;
-        $('#regionLabel').textContent = `${$('#regionSelect').selectedOptions[0].text} Region`;
-        loadAndRender();
-      });
-
-      $('#refreshBtn').addEventListener('click', () => loadAndRender());
-
-      // View group
-      const viewGroup = $('#viewGroup');
-      viewGroup.addEventListener('click', (e) => {
-        const btn = e.target.closest('button[data-view]');
-        if (!btn) return;
-        state.view = btn.dataset.view;
-        updateActive(viewGroup, 'view', state.view);
-        updatePeriodLabel();
-        // For now, server logic is monthly; still reload so future view support works seamlessly
-        loadAndRender();
-      });
-
-      // Rank group
-      const rankGroup = $('#rankGroup');
-      rankGroup.addEventListener('click', (e) => {
-        const btn = e.target.closest('button[data-rank]');
-        if (!btn) return;
-        state.rank = btn.dataset.rank;
-        updateActive(rankGroup, 'rank', state.rank);
-
-        // Re-sort existing rows (no extra API call needed)
-        if (state.data) {
-          const rows = sortRows(flattenDesigners(state.data));
-          renderKPIs(rows);
-          renderTable(rows);
+    function setRankButtonActive(key) {
+      $$('.rank-btn').forEach(btn => {
+        if (btn.dataset.rank === key) {
+          btn.classList.remove('bg-white');
+          btn.classList.add('bg-green-100','text-green-800');
         } else {
-          loadAndRender();
+          btn.classList.remove('bg-green-100','text-green-800');
+          btn.classList.add('bg-white');
         }
       });
     }
 
-    // ------------------------------
-    // Init
-    // ------------------------------
-    initMonthSelect();
-    wireEvents();
-    updateActive($('#viewGroup'), 'view', state.view);
-    updateActive($('#rankGroup'), 'rank', state.rank);
-    $('#regionLabel').textContent = `${$('#regionSelect').selectedOptions[0].text} Region`;
-    loadAndRender();
+    function setViewButtonActive(view) {
+      $$('.view-btn').forEach(btn => {
+        if (btn.dataset.view === view) {
+          btn.classList.remove('bg-white');
+          btn.classList.add('bg-indigo-600','text-white');
+        } else {
+          btn.classList.remove('bg-indigo-600','text-white');
+          btn.classList.add('bg-white');
+        }
+      });
+    }
+
+    /***********************
+     * Data Loading
+     ***********************/
+    async function fetchMetrics() {
+      const url = `/api/metrics/region?region=${encodeURIComponent(state.region)}&month=${encodeURIComponent(state.month)}`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`Metrics request failed: ${res.status}`);
+      return res.json();
+    }
+
+    function deriveKPIs(payload) {
+      // Your API shapes by franchise; here we aggregate simply for demo
+      // Expecting payload like: { "downtown-seattle": { totals: {...}, designers:[...] }, ... }
+      const franchises = Object.values(payload || {});
+      const allDesigners = franchises.flatMap(f => f.designers || []);
+
+      const totalDesigners = allDesigners.length || 0;
+      const avgSales = allDesigners.length
+        ? allDesigners.reduce((s, d) => s + (d.monthlySales || 0), 0) / allDesigners.length
+        : 0;
+
+      // Demo placeholders
+      const perfLabel = totalDesigners > 0 ? 'Good' : '--';
+      const conversion = null; // if you have it, set a number
+      const ticket = null;
+      const appts = 22; // demo
+
+      return {
+        totalDesigners,
+        perfLabel,
+        avgSales,
+        conversion,
+        ticket,
+        appts
+      };
+    }
+
+    function renderKPIs(kpis) {
+      $('#kpiDesigners').textContent = kpis.totalDesigners || '--';
+      $('#kpiPerformance').textContent = kpis.perfLabel || '--';
+      $('#kpiAvgSales').textContent = kpis.avgSales ? formatMoney(kpis.avgSales) : '--';
+
+      $('#trendConversion').textContent = kpis.conversion != null ? pct(kpis.conversion) : '--';
+      $('#trendConversionPrev').textContent = 'Previous Month: —';
+      $('#trendTicket').textContent = kpis.ticket != null ? formatMoney(kpis.ticket) : '--';
+      $('#trendTicketPrev').textContent = 'Previous Month: —';
+      $('#trendAppts').textContent = kpis.appts ?? '--';
+
+      const d = new Date(state.month + '-01');
+      const lbl = `Current Period: ${d.toLocaleString(undefined, { month: 'long', year: 'numeric' })}`;
+      $('#periodLabel').textContent = lbl;
+    }
+
+    function renderTable(payload) {
+      const body = $('#rankingsBody');
+      body.innerHTML = '';
+
+      // Flatten & sort by rank selection (very basic demo)
+      const rows = [];
+      Object.entries(payload || {}).forEach(([slug, f]) => {
+        (f.designers || []).forEach(d => {
+          rows.push({
+            slug,
+            designer: d.name,
+            monthlySales: d.monthlySales || 0,
+            avgTicket: d.avgTicket || 0,
+            closingRate: d.closingRate || 0
+          });
+        });
+      });
+
+      const key = state.rankBy;
+      const sortKey = (r) => {
+        if (key === 'closingRate') return r.closingRate || 0;
+        if (key === 'avgTicket') return r.avgTicket || 0;
+        return r.monthlySales || 0;
+      };
+
+      rows.sort((a,b) => sortKey(b) - sortKey(a));
+
+      rows.forEach((r, i) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="px-3 py-2">${i+1}</td>
+          <td class="px-3 py-2">${r.designer ?? '--'}</td>
+          <td class="px-3 py-2">${r.slug}</td>
+          <td class="px-3 py-2">${formatMoney(r.monthlySales)}</td>
+          <td class="px-3 py-2">${r.avgTicket ? formatMoney(r.avgTicket) : '--'}</td>
+          <td class="px-3 py-2">${r.closingRate ? pct(r.closingRate) : '--'}</td>
+          <td class="px-3 py-2">—</td>
+          <td class="px-3 py-2">
+            <button class="text-indigo-600 hover:underline">View</button>
+          </td>
+        `;
+        body.appendChild(tr);
+      });
+    }
+
+    async function refreshData() {
+      try {
+        setBusy($('#refreshBtn'), true);
+        const payload = await fetchMetrics();
+        state.data = payload;
+        const kpis = deriveKPIs(payload);
+        renderKPIs(kpis);
+        renderTable(payload);
+      } catch (err) {
+        console.error(err);
+        showToast('API error. Check route or env vars.');
+      } finally {
+        setBusy($('#refreshBtn'), false);
+      }
+    }
+
+    /***********************
+     * Locations modal logic
+     ***********************/
+    function openLocationsModal() {
+      $('#locationsModal').classList.remove('hidden');
+      $('#locationsModal').classList.add('flex');
+      loadLocationsList();
+    }
+
+    function closeLocationsModal() {
+      $('#locationsModal').classList.add('hidden');
+      $('#locationsModal').classList.remove('flex');
+    }
+
+    async function addLocation(e) {
+      e.preventDefault();
+      const slug = $('#locSlug').value.trim();
+      const name = $('#locName').value.trim();
+      const city = $('#locCity').value.trim();
+      const province = $('#locProvince').value.trim();
+
+      const status = $('#locStatus');
+      status.className = 'hidden text-sm';
+
+      if (!slug || !name || !city || !province) {
+        status.textContent = 'All fields are required.';
+        status.className = 'text-red-600 text-sm';
+        return;
+      }
+
+      setBusy($('#addLocationForm button'), true);
+      try {
+        const res = await fetch('/api/franchises/create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ slug, name, city, province })
+        });
+        const body = await res.json().catch(() => ({}));
+
+        if (!res.ok) {
+          status.textContent = body?.error || 'Failed to save location.';
+          status.className = 'text-red-600 text-sm';
+          return;
+        }
+
+        status.textContent = 'Location saved.';
+        status.className = 'text-emerald-700 text-sm';
+        showToast('Location saved');
+        // Clear inputs
+        $('#locSlug').value = '';
+        $('#locName').value = '';
+        $('#locCity').value = '';
+        $('#locProvince').value = '';
+
+        await loadLocationsList();
+        // Also refresh dashboard data in case the new location affects metrics
+        await refreshData();
+      } catch (err) {
+        console.error(err);
+        status.textContent = 'Unexpected error.';
+        status.className = 'text-red-600 text-sm';
+      } finally {
+        setBusy($('#addLocationForm button'), false);
+      }
+    }
+
+    async function loadLocationsList() {
+      const body = $('#locationsBody');
+      body.innerHTML = `<tr><td class="px-3 py-2" colspan="5">Loading…</td></tr>`;
+      try {
+        // Uses your existing GET route at /api/franchises/get (or /api/franchises)
+        // In your repo there is api/franchises/get.js — we'll try that first.
+        let res = await fetch('/api/franchises/get').catch(() => null);
+        if (!res || !res.ok) {
+          // fallback to /api/franchises (if you implemented index.js GET)
+          res = await fetch('/api/franchises');
+        }
+        if (!res.ok) throw new Error('Failed to load locations');
+
+        const rows = await res.json();
+        if (!Array.isArray(rows) || rows.length === 0) {
+          body.innerHTML = `<tr><td class="px-3 py-2" colspan="5">No locations yet.</td></tr>`;
+          return;
+        }
+
+        body.innerHTML = '';
+        rows.forEach(r => {
+          const tr = document.createElement('tr');
+          const created = r.created_at
+            ? new Date(r.created_at).toLocaleString()
+            : '—';
+          tr.innerHTML = `
+            <td class="px-3 py-2">${r.slug || ''}</td>
+            <td class="px-3 py-2">${r.name || ''}</td>
+            <td class="px-3 py-2">${r.city || ''}</td>
+            <td class="px-3 py-2">${r.province || ''}</td>
+            <td class="px-3 py-2">${created}</td>
+          `;
+          body.appendChild(tr);
+        });
+      } catch (err) {
+        console.error(err);
+        body.innerHTML = `<tr><td class="px-3 py-2 text-red-600" colspan="5">Failed to load locations.</td></tr>`;
+      }
+    }
+
+    /***********************
+     * Event wiring
+     ***********************/
+    function wireEvents() {
+      // Refresh
+      $('#refreshBtn').addEventListener('click', refreshData);
+
+      // Rank buttons
+      $$('.rank-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          state.rankBy = btn.dataset.rank;
+          setRankButtonActive(state.rankBy);
+          // Only affects display ordering:
+          if (state.data) renderTable(state.data);
+        });
+      });
+
+      // View buttons (UI-only toggles)
+      $$('.view-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          state.view = btn.dataset.view;
+          setViewButtonActive(state.view);
+        });
+      });
+
+      // Month select
+      $('#monthSelect').addEventListener('change', (e) => {
+        state.month = e.target.value;
+        refreshData();
+      });
+
+      // Manage Locations modal
+      $('#manageLocationsBtn').addEventListener('click', openLocationsModal);
+      $('#closeLocationsModal').addEventListener('click', closeLocationsModal);
+      $('#closeLocationsModal2').addEventListener('click', closeLocationsModal);
+      $('#addLocationForm').addEventListener('submit', addLocation);
+      $('#reloadLocations').addEventListener('click', loadLocationsList);
+
+      // Filter / Export placeholders
+      $('#filterDesignersBtn').addEventListener('click', () => showToast('Filter panel coming soon'));
+      $('#exportBtn').addEventListener('click', () => showToast('Exported CSV (demo)'));
+    }
+
+    /***********************
+     * Boot
+     ***********************/
+    function boot() {
+      // Month selector
+      const months = monthOptions();
+      const sel = $('#monthSelect');
+      sel.innerHTML = months.map((m,i) =>
+        `<option value="${m.value}" ${i===0?'selected':''}>${m.label}</option>`).join('');
+      state.month = months[0].value;
+
+      wireEvents();
+      setViewButtonActive(state.view);
+      setRankButtonActive(state.rankBy);
+      refreshData();
+    }
+
+    boot();
   </script>
 </body>
 </html>
