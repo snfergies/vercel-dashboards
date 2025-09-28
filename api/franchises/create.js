@@ -11,28 +11,18 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  // Support both JSON body and query string
-  const src =
-    req.body && Object.keys(req.body).length > 0 ? req.body : req.query;
-
+  const src = req.body && Object.keys(req.body).length ? req.body : req.query;
   const { slug, name, city, province } = src || {};
 
   if (!slug || !name || !city || !province) {
     return res.status(400).json({ error: "Missing required fields" });
   }
 
-  const { error } = await supabase.from("franchises").insert([
-    {
-      slug,
-      name,
-      city,
-      province,
-    },
-  ]);
+  // Insert or update if slug already exists
+  const { error } = await supabase
+    .from("franchises")
+    .upsert([{ slug, name, city, province }], { onConflict: "slug" });
 
-  if (error) {
-    return res.status(500).json({ error: error.message });
-  }
-
+  if (error) return res.status(500).json({ error: error.message });
   return res.status(200).json({ ok: true });
 }
