@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Manage Franchise Locations</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen bg-slate-50">
+  <div class="max-w-5xl mx-auto px-4 py-8">
+    <div class="flex items-center justify-between mb-6">
+      <h1 class="text-2xl font-bold text-slate-800">Manage Locations</h1>
+      <a href="/regional/" class="text-sm text-indigo-700 hover:underline">← Back to Regional Dashboard</a>
+    </div>
+
+    <!-- Form -->
+    <div class="bg-white rounded-xl shadow p-5 mb-8">
+      <h2 class="font-semibold text-slate-700 mb-4">Add / Edit Location</h2>
+      <form id="locationForm" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div>
+          <label class="block text-sm text-slate-600 mb-1">Slug *</label>
+          <input id="slug" class="w-full border rounded-lg px-3 py-2" placeholder="e.g. vancouver-downtown" required />
+        </div>
+        <div>
+          <label class="block text-sm text-slate-600 mb-1">Name *</label>
+          <input id="name" class="w-full border rounded-lg px-3 py-2" placeholder="Vancouver Downtown" required />
+        </div>
+        <div>
+          <label class="block text-sm text-slate-600 mb-1">City *</label>
+          <input id="city" class="w-full border rounded-lg px-3 py-2" placeholder="Vancouver" required />
+        </div>
+        <div>
+          <label class="block text-sm text-slate-600 mb-1">Province *</label>
+          <input id="province" class="w-full border rounded-lg px-3 py-2" placeholder="BC" required />
+        </div>
+        <div class="md:col-span-4 flex gap-3 mt-2">
+          <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700">
+            Save (Create / Update)
+          </button>
+          <button type="button" id="resetBtn" class="px-4 py-2 rounded-lg border hover:bg-slate-50">
+            Reset
+          </button>
+        </div>
+      </form>
+      <p id="formMsg" class="text-sm mt-3"></p>
+    </div>
+
+    <!-- List -->
+    <div class="bg-white rounded-xl shadow">
+      <div class="p-5 border-b">
+        <h2 class="font-semibold text-slate-700">All Locations</h2>
+      </div>
+      <div class="p-5 overflow-x-auto">
+        <table class="w-full text-left text-sm">
+          <thead>
+            <tr class="text-slate-500">
+              <th class="py-2">Slug</th>
+              <th class="py-2">Name</th>
+              <th class="py-2">City</th>
+              <th class="py-2">Province</th>
+              <th class="py-2">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const rowsEl = $("rows");
+    const form = $("locationForm");
+    const msg = $("formMsg");
+
+    async function loadRows() {
+      rowsEl.innerHTML = `<tr><td class="py-3 text-slate-400" colspan="5">Loading...</td></tr>`;
+      try {
+        const r = await fetch("/api/franchises/get");
+        const data = await r.json();
+        const list = Array.isArray(data) ? data : (data ? [data] : []);
+
+        if (!list.length) {
+          rowsEl.innerHTML = `<tr><td class="py-3 text-slate-400" colspan="5">No locations yet.</td></tr>`;
+          return;
+        }
+
+        rowsEl.innerHTML = list.map(loc => `
+          <tr class="border-t">
+            <td class="py-2 font-mono">${loc.slug}</td>
+            <td class="py-2">${loc.name || ""}</td>
+            <td class="py-2">${loc.city || ""}</td>
+            <td class="py-2">${loc.province || ""}</td>
+            <td class="py-2">
+              <button class="text-indigo-700 hover:underline mr-3" onclick="editRow('${loc.slug}')">Edit</button>
+              <button class="text-rose-700 hover:underline" onclick="delRow('${loc.slug}')">Delete</button>
+            </td>
+          </tr>
+        `).join("");
+      } catch (e) {
+        rowsEl.innerHTML = `<tr><td class="py-3 text-rose-600" colspan="5">Error: ${e.message}</td></tr>`;
+      }
+    }
+
+    async function editRow(slug) {
+      msg.textContent = "";
+      const r = await fetch(`/api/franchises/get?slug=${encodeURIComponent(slug)}`);
+      const loc = await r.json();
+      if (!loc || loc.error) {
+        msg.textContent = loc?.error || "Could not load location.";
+        msg.className = "text-sm text-rose-700";
+        return;
+      }
+      $("slug").value = loc.slug || "";
+      $("name").value = loc.name || "";
+      $("city").value = loc.city || "";
+      $("province").value = loc.province || "";
+      $("slug").focus();
+    }
+
+    async function delRow(slug) {
+      msg.textContent = "";
+      if (!confirm(`Delete "${slug}"? This cannot be undone.`)) return;
+      const r = await fetch("/api/franchises/delete", {
+        method: "POST", // permitted in our handler
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug })
+      });
+      const data = await r.json();
+      if (data?.ok) {
+        msg.textContent = "Deleted.";
+        msg.className = "text-sm text-emerald-700";
+        loadRows();
+      } else {
+        msg.textContent = data?.error || "Delete failed.";
+        msg.className = "text-sm text-rose-700";
+      }
+    }
+    window.delRow = delRow; // expose for inline onclick
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      msg.textContent = "";
+      const payload = {
+        slug: $("slug").value.trim(),
+        name: $("name").value.trim(),
+        city: $("city").value.trim(),
+        province: $("province").value.trim()
+      };
+      if (!payload.slug || !payload.name || !payload.city || !payload.province) {
+        msg.textContent = "Please fill all fields.";
+        msg.className = "text-sm text-rose-700";
+        return;
+      }
+      const r = await fetch("/api/franchises/update", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      const data = await r.json();
+      if (data?.ok) {
+        msg.textContent = "Saved.";
+        msg.className = "text-sm text-emerald-700";
+        form.reset();
+        loadRows();
+      } else {
+        msg.textContent = data?.error || "Save failed.";
+        msg.className = "text-sm text-rose-700";
+      }
+    });
+
+    $("resetBtn").addEventListener("click", () => {
+      msg.textContent = "";
+      form.reset();
+    });
+
+    loadRows();
+  </script>
+</body>
+</html>
