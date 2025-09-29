@@ -135,7 +135,7 @@
     </div>
   </div>
 
-  <!-- Modals (same IDs as your original so styles/UX match) -->
+  <!-- Modals -->
   <div id="addDesignerModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
     <div class="bg-white rounded-lg p-6 w-full max-w-md mx-4">
       <h3 class="text-lg font-bold text-gray-800 mb-4">Add New Designer</h3>
@@ -263,7 +263,7 @@
   <script>
     // ========= URL params (slug, month) =========
     const params = new URLSearchParams(location.search);
-    const slug = params.get('slug') || 'downtown-seattle'; // change default if needed
+    const slug = params.get('slug') || 'downtown-seattle'; // default if none provided
     let currentMonth = params.get('month') || '2025-09';
 
     // ========= In-memory state =========
@@ -278,7 +278,7 @@
     let monthTotals = { sales: 0, avgTicket: 0, conversion: 0 };
 
     // ========= Helpers =========
-    const safeNumber = (v, d=0) => Number.isFinite(v) ? v : d;
+    const safeNumber = (v, d = 0) => Number.isFinite(Number(v)) ? Number(v) : d;
     const fmtMoney  = (n) => '$' + safeNumber(n).toLocaleString();
     const fmtPct    = (n) => safeNumber(n).toFixed(1) + '%';
 
@@ -317,12 +317,15 @@
         franchiseGoals.ticketGoal = safeNumber(data.goals.ticketGoal, franchiseGoals.ticketGoal);
       }
 
-      monthTotals.sales = safeNumber(data.totals?.sales, data.designers?.reduce((s,d)=>s+safeNumber(d.monthlySales),0) || 0);
-      monthTotals.avgTicket = safeNumber(data.totals?.avgTicket, 0);
-      monthTotals.conversion = safeNumber(data.totals?.conversion, 0);
+      monthTotals.sales = safeNumber(
+        data?.totals?.sales,
+        (data?.designers || []).reduce((s, d) => s + safeNumber(d.monthlySales), 0)
+      );
+      monthTotals.avgTicket = safeNumber(data?.totals?.avgTicket, 0);
+      monthTotals.conversion = safeNumber(data?.totals?.conversion, 0);
 
       designers = (data.designers || []).map((d, i) => ({
-        id: d.id ?? (i+1),
+        id: d.id ?? (i + 1),
         name: d.name,
         monthlySales: safeNumber(d.monthlySales),
         appointments: safeNumber(d.appointments),
@@ -357,11 +360,12 @@
     // ========= Paint header + goals =========
     function paintHeader() {
       document.getElementById('storeTitle').textContent = 'Sales Performance Dashboard';
-      document.getElementById('storeLocation').textContent =
-        franchiseMeta.name + (franchiseMeta.city ? ` • ${franchiseMeta.city}, ${franchiseMeta.state}` : '');
+      const locSuffix = franchiseMeta.city ? ` • ${franchiseMeta.city}, ${franchiseMeta.state}` : '';
+      document.getElementById('storeLocation').textContent = `${franchiseMeta.name}${locSuffix}`;
 
       // set month selector
-      document.getElementById('monthSelect').value = currentMonth;
+      const ms = document.getElementById('monthSelect');
+      if (ms) ms.value = currentMonth;
     }
 
     function updateGoalCards() {
@@ -372,12 +376,12 @@
       // Current values (from totals or designer averages)
       const currentSales = monthTotals.sales;
       const currentConversion =
-        designers.length ? designers.reduce((s,d)=>s + safeNumber(d.conversionRate),0) / designers.length : monthTotals.conversion;
+        designers.length ? designers.reduce((s, d) => s + safeNumber(d.conversionRate), 0) / designers.length : monthTotals.conversion;
       const currentTicket =
-        designers.length ? Math.round(designers.reduce((s,d)=>s + safeNumber(d.avgTicket),0) / designers.length) : monthTotals.avgTicket;
+        designers.length ? Math.round(designers.reduce((s, d) => s + safeNumber(d.avgTicket), 0) / designers.length) : monthTotals.avgTicket;
 
       document.getElementById('currentSales').textContent = fmtMoney(currentSales);
-      document.getElementById('currentConv').textContent = isFinite(currentConversion) ? currentConversion.toFixed(1) + '%' : '—%';
+      document.getElementById('currentConv').textContent = Number.isFinite(currentConversion) ? currentConversion.toFixed(1) + '%' : '—%';
       document.getElementById('currentTicket').textContent = fmtMoney(currentTicket);
 
       const salesProgress = Math.min((currentSales / Math.max(1, franchiseGoals.salesGoal)) * 100, 100);
@@ -400,7 +404,7 @@
       tbody.innerHTML = '';
 
       // rank by monthlySales among current designers
-      const bySales = [...designers].sort((a,b)=>b.monthlySales - a.monthlySales);
+      const bySales = [...designers].sort((a, b) => b.monthlySales - a.monthlySales);
 
       designers.forEach(d => {
         const avgTicket = d.salesClosed > 0 ? Math.round(d.monthlySales / d.salesClosed) : (d.avgTicket || 0);
@@ -460,41 +464,42 @@
               <button class="edit-designer-btn text-blue-600 hover:text-blue-900" data-id="${d.id}">Edit</button>
               <button class="delete-designer-btn text-red-600 hover:text-red-900" data-id="${d.id}">Delete</button>
             </div>
-          </td>
-        `;
+          </td>`;
         tbody.appendChild(tr);
       });
 
       // wire actions
-      document.querySelectorAll('.edit-designer-btn').forEach(b=>b.addEventListener('click', () => editDesigner(+b.dataset.id)));
-      document.querySelectorAll('.delete-designer-btn').forEach(b=>b.addEventListener('click', () => showDeleteConfirmation(+b.dataset.id)));
+      document.querySelectorAll('.edit-designer-btn').forEach(btn => btn.addEventListener('click', () => editDesigner(+btn.dataset.id)));
+      document.querySelectorAll('.delete-designer-btn').forEach(btn => btn.addEventListener('click', () => showDeleteConfirmation(+btn.dataset.id)));
     }
 
     // ========= Forms + Modals logic (front-end only) =========
     function prepareForms(){
       // Goals modal month text
-      const [y,m]=currentMonth.split('-'); const dt=new Date(+y, +m-1, 1);
-      document.getElementById('goalsMonthDisplay').textContent = dt.toLocaleDateString('en-US',{month:'long',year:'numeric'});
+      const [y, m] = currentMonth.split('-');
+      const dt = new Date(+y, +m - 1, 1);
+      document.getElementById('goalsMonthDisplay').textContent = dt.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
       document.getElementById('franchiseGoalsMonthSelect').value = currentMonth;
-      document.getElementById('franchiseGoalsMonthDisplay').textContent = dt.toLocaleDateString('en-US',{month:'long',year:'numeric'});
+      document.getElementById('franchiseGoalsMonthDisplay').textContent = dt.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
       // Goals upload per designer
-      const form = document.getElementById('goalsForm'); form.innerHTML='';
-      designers.forEach(d=>{
+      const form = document.getElementById('goalsForm');
+      form.innerHTML = '';
+      designers.forEach(d => {
         const div = document.createElement('div');
-        div.className='flex items-center space-x-4';
+        div.className = 'flex items-center space-x-4';
         div.innerHTML = `
           <div class="flex-1"><label class="block text-sm font-medium text-gray-700">${d.name}</label></div>
-          <div class="flex-1"><input type="number" data-id="${d.id}" value="${d.monthlyGoal}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" placeholder="Monthly Goal"></div>
-        `;
+          <div class="flex-1"><input type="number" data-id="${d.id}" value="${d.monthlyGoal}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" placeholder="Monthly Goal"></div>`;
         form.appendChild(div);
       });
 
       // Update progress
-      const prog = document.getElementById('progressForm'); prog.innerHTML='';
-      designers.forEach(d=>{
+      const prog = document.getElementById('progressForm');
+      prog.innerHTML = '';
+      designers.forEach(d => {
         const div = document.createElement('div');
-        div.className='bg-gray-50 p-4 rounded-lg';
+        div.className = 'bg-gray-50 p-4 rounded-lg';
         div.innerHTML = `
           <h4 class="font-medium text-gray-800 mb-3">${d.name}</h4>
           <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -514,8 +519,7 @@
               <label class="block text-xs font-medium text-gray-700 mb-1">Monthly Goal ($)</label>
               <input type="number" data-id="${d.id}" data-field="monthlyGoal" value="${d.monthlyGoal}" class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-orange-500">
             </div>
-          </div>
-        `;
+          </div>`;
         prog.appendChild(div);
       });
     }
@@ -536,57 +540,57 @@
     }
 
     // ======= Modal helpers =======
-    function show(id){ const el=document.getElementById(id); el.classList.remove('hidden'); el.classList.add('flex'); }
-    function hide(id){ const el=document.getElementById(id); el.classList.add('hidden'); el.classList.remove('flex'); }
+    function show(id){ const el = document.getElementById(id); el.classList.remove('hidden'); el.classList.add('flex'); }
+    function hide(id){ const el = document.getElementById(id); el.classList.add('hidden'); el.classList.remove('flex'); }
 
     // ======= Event listeners =======
     function setupEvents(){
       // Views
-      document.getElementById('weeklyView').addEventListener('click',()=>switchView('weekly'));
-      document.getElementById('monthlyView').addEventListener('click',()=>switchView('monthly'));
-      document.getElementById('quarterlyView').addEventListener('click',()=>switchView('quarterly'));
-      document.getElementById('ytdView').addEventListener('click',()=>switchView('ytd'));
+      document.getElementById('weeklyView').addEventListener('click', () => switchView('weekly'));
+      document.getElementById('monthlyView').addEventListener('click', () => switchView('monthly'));
+      document.getElementById('quarterlyView').addEventListener('click', () => switchView('quarterly'));
+      document.getElementById('ytdView').addEventListener('click', () => switchView('ytd'));
 
       // Month change
-      document.getElementById('monthSelect').addEventListener('change', (e)=>{
+      document.getElementById('monthSelect').addEventListener('change', (e) => {
         currentMonth = e.target.value;
         // keep slug, update URL for bookmarking
         const u = new URL(location.href);
         u.searchParams.set('month', currentMonth);
         u.searchParams.set('slug', slug);
-        history.replaceState(null,'',u.toString());
+        history.replaceState(null, '', u.toString());
         loadFranchise();
       });
 
       // Buttons open modals
-      document.getElementById('addDesignerBtn').addEventListener('click', ()=>show('addDesignerModal'));
-      document.getElementById('uploadGoalsBtn').addEventListener('click', ()=>show('uploadGoalsModal'));
-      document.getElementById('updateProgressBtn').addEventListener('click', ()=>show('updateProgressModal'));
-      document.getElementById('newMonthBtn').addEventListener('click', ()=>show('newMonthModal'));
-      document.getElementById('setFranchiseGoalsBtn').addEventListener('click', ()=>{
+      document.getElementById('addDesignerBtn').addEventListener('click', () => show('addDesignerModal'));
+      document.getElementById('uploadGoalsBtn').addEventListener('click', () => show('uploadGoalsModal'));
+      document.getElementById('updateProgressBtn').addEventListener('click', () => show('updateProgressModal'));
+      document.getElementById('newMonthBtn').addEventListener('click', () => show('newMonthModal'));
+      document.getElementById('setFranchiseGoalsBtn').addEventListener('click', () => {
         // preload fields
         document.getElementById('franchiseGoalsMonthSelect').value = currentMonth;
         document.getElementById('franchiseSalesGoalInput').value = franchiseGoals.salesGoal;
         document.getElementById('franchiseConversionGoalInput').value = franchiseGoals.conversionGoal;
         document.getElementById('franchiseTicketGoalInput').value = franchiseGoals.ticketGoal;
-        const [y,m]=currentMonth.split('-'); const dt=new Date(+y,+m-1,1);
-        document.getElementById('franchiseGoalsMonthDisplay').textContent = dt.toLocaleDateString('en-US',{month:'long',year:'numeric'});
+        const [y, m] = currentMonth.split('-'); const dt = new Date(+y, +m - 1, 1);
+        document.getElementById('franchiseGoalsMonthDisplay').textContent = dt.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
         show('franchiseGoalsModal');
       });
 
       // Close modals
-      document.getElementById('cancelAddDesigner').addEventListener('click',()=>hide('addDesignerModal'));
-      document.getElementById('cancelEditDesigner').addEventListener('click',()=>hide('editDesignerModal'));
-      document.getElementById('cancelUploadGoals').addEventListener('click',()=>hide('uploadGoalsModal'));
-      document.getElementById('cancelUpdateProgress').addEventListener('click',()=>hide('updateProgressModal'));
-      document.getElementById('cancelNewMonth').addEventListener('click',()=>hide('newMonthModal'));
-      document.getElementById('cancelFranchiseGoals').addEventListener('click',()=>hide('franchiseGoalsModal'));
-      document.getElementById('cancelDeleteDesigner').addEventListener('click',()=>hide('deleteDesignerModal'));
+      document.getElementById('cancelAddDesigner').addEventListener('click', () => hide('addDesignerModal'));
+      document.getElementById('cancelEditDesigner').addEventListener('click', () => hide('editDesignerModal'));
+      document.getElementById('cancelUploadGoals').addEventListener('click', () => hide('uploadGoalsModal'));
+      document.getElementById('cancelUpdateProgress').addEventListener('click', () => hide('updateProgressModal'));
+      document.getElementById('cancelNewMonth').addEventListener('click', () => hide('newMonthModal'));
+      document.getElementById('cancelFranchiseGoals').addEventListener('click', () => hide('franchiseGoalsModal'));
+      document.getElementById('cancelDeleteDesigner').addEventListener('click', () => hide('deleteDesignerModal'));
 
       // Confirm delete
-      document.getElementById('confirmDeleteDesigner').addEventListener('click', ()=>{
+      document.getElementById('confirmDeleteDesigner').addEventListener('click', () => {
         if(!deletingDesignerId) return;
-        designers = designers.filter(d=>d.id !== deletingDesignerId);
+        designers = designers.filter(d => d.id !== deletingDesignerId);
         deletingDesignerId = null;
         renderDesignerTable();
         prepareForms();
@@ -594,54 +598,54 @@
       });
 
       // Add designer (client-side only)
-      document.getElementById('addDesignerForm').addEventListener('submit', (e)=>{
+      document.getElementById('addDesignerForm').addEventListener('submit', (e) => {
         e.preventDefault();
         const name = document.getElementById('designerName').value.trim();
-        const goal = parseInt(document.getElementById('designerGoal').value,10) || 0;
-        const nextId = designers.length ? Math.max(...designers.map(d=>d.id))+1 : 1;
-        designers.push({ id: nextId, name, monthlySales:0, appointments:0, salesClosed:0, monthlyGoal:goal, avgTicket:0, conversionRate:0 });
+        const goal = parseInt(document.getElementById('designerGoal').value, 10) || 0;
+        const nextId = designers.length ? Math.max(...designers.map(d => d.id)) + 1 : 1;
+        designers.push({ id: nextId, name, monthlySales: 0, appointments: 0, salesClosed: 0, monthlyGoal: goal, avgTicket: 0, conversionRate: 0 });
         renderDesignerTable(); prepareForms(); hide('addDesignerModal'); e.target.reset();
       });
 
       // Edit designer
-      document.getElementById('editDesignerForm').addEventListener('submit',(e)=>{
+      document.getElementById('editDesignerForm').addEventListener('submit', (e) => {
         e.preventDefault();
-        const d = designers.find(x=>x.id===editingDesignerId); if(!d) return;
+        const d = designers.find(x => x.id === editingDesignerId); if(!d) return;
         d.name = document.getElementById('editDesignerName').value.trim();
-        d.monthlyGoal = parseInt(document.getElementById('editDesignerGoal').value,10) || d.monthlyGoal;
-        renderDesignerTable(); prepareForms(); hide('editDesignerModal'); editingDesignerId=null;
+        d.monthlyGoal = parseInt(document.getElementById('editDesignerGoal').value, 10) || d.monthlyGoal;
+        renderDesignerTable(); prepareForms(); hide('editDesignerModal'); editingDesignerId = null;
       });
 
       // Save goals
-      document.getElementById('saveGoals').addEventListener('click', ()=>{
-        document.querySelectorAll('#goalsForm input[data-id]').forEach(inp=>{
-          const id = +inp.dataset.id; const d = designers.find(x=>x.id===id); if (d) d.monthlyGoal = parseInt(inp.value,10)||0;
+      document.getElementById('saveGoals').addEventListener('click', () => {
+        document.querySelectorAll('#goalsForm input[data-id]').forEach(inp => {
+          const id = +inp.dataset.id; const d = designers.find(x => x.id === id); if (d) d.monthlyGoal = parseInt(inp.value, 10) || 0;
         });
         renderDesignerTable(); prepareForms(); hide('uploadGoalsModal');
       });
 
       // Save progress
-      document.getElementById('saveProgress').addEventListener('click', ()=>{
-        document.querySelectorAll('#progressForm input[data-id]').forEach(inp=>{
+      document.getElementById('saveProgress').addEventListener('click', () => {
+        document.querySelectorAll('#progressForm input[data-id]').forEach(inp => {
           const id = +inp.dataset.id; const field = inp.dataset.field;
-          const d = designers.find(x=>x.id===id); if (d) d[field] = parseInt(inp.value,10)||0;
+          const d = designers.find(x => x.id === id); if (d) d[field] = parseInt(inp.value, 10) || 0;
         });
         renderDesignerTable(); prepareForms(); hide('updateProgressModal');
       });
 
       // Save franchise goals (client-side only)
-      document.getElementById('franchiseGoalsForm').addEventListener('submit', (e)=>{
+      document.getElementById('franchiseGoalsForm').addEventListener('submit', (e) => {
         e.preventDefault();
         currentMonth = document.getElementById('franchiseGoalsMonthSelect').value;
-        franchiseGoals.salesGoal = parseInt(document.getElementById('franchiseSalesGoalInput').value,10)||franchiseGoals.salesGoal;
-        franchiseGoals.conversionGoal = parseFloat(document.getElementById('franchiseConversionGoalInput').value)||franchiseGoals.conversionGoal;
-        franchiseGoals.ticketGoal = parseInt(document.getElementById('franchiseTicketGoalInput').value,10)||franchiseGoals.ticketGoal;
+        franchiseGoals.salesGoal = parseInt(document.getElementById('franchiseSalesGoalInput').value, 10) || franchiseGoals.salesGoal;
+        franchiseGoals.conversionGoal = parseFloat(document.getElementById('franchiseConversionGoalInput').value) || franchiseGoals.conversionGoal;
+        franchiseGoals.ticketGoal = parseInt(document.getElementById('franchiseTicketGoalInput').value, 10) || franchiseGoals.ticketGoal;
 
         // reflect in URL/month select
         const u = new URL(location.href);
         u.searchParams.set('month', currentMonth);
         u.searchParams.set('slug', slug);
-        history.replaceState(null,'',u.toString());
+        history.replaceState(null, '', u.toString());
         document.getElementById('monthSelect').value = currentMonth;
 
         updateGoalCards();
@@ -649,20 +653,20 @@
       });
 
       // New month (client reset)
-      document.getElementById('newMonthForm').addEventListener('submit',(e)=>{
+      document.getElementById('newMonthForm').addEventListener('submit', (e) => {
         e.preventDefault();
         const newMonth = document.getElementById('newMonthInput').value;
-        if(!newMonth) return;
+        if (!newMonth) return;
         currentMonth = newMonth;
 
         // reset designer running stats for the new month (purely front-end)
-        designers.forEach(d => { d.monthlySales=0; d.appointments=0; d.salesClosed=0; });
+        designers.forEach(d => { d.monthlySales = 0; d.appointments = 0; d.salesClosed = 0; });
 
         // update URL + selector
         const u = new URL(location.href);
         u.searchParams.set('month', currentMonth);
         u.searchParams.set('slug', slug);
-        history.replaceState(null,'',u.toString());
+        history.replaceState(null, '', u.toString());
         document.getElementById('monthSelect').value = currentMonth;
 
         updateGoalCards();
@@ -674,10 +678,10 @@
 
     function switchView(view){
       currentView = view;
-      document.querySelectorAll('[id$="View"]').forEach(btn=>{
-        btn.className='px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300';
+      document.querySelectorAll('[id$="View"]').forEach(btn => {
+        btn.className = 'px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300';
       });
-      document.getElementById(view + 'View').className='px-4 py-2 bg-blue-600 text-white rounded-lg font-medium';
+      document.getElementById(view + 'View').className = 'px-4 py-2 bg-blue-600 text-white rounded-lg font-medium';
 
       const periods = {
         weekly: 'Week of September 2-8, 2025',
@@ -685,8 +689,7 @@
         quarterly: 'Q3 2025',
         ytd: 'January - September 2025'
       };
-      document.getElementById('currentViewTitle').textContent =
-        view[0].toUpperCase() + view.slice(1) + ' View';
+      document.getElementById('currentViewTitle').textContent = view[0].toUpperCase() + view.slice(1) + ' View';
       document.getElementById('currentPeriod').textContent = periods[view];
     }
 
