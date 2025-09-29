@@ -534,7 +534,7 @@
         await refreshData();
 
         // Open the new franchise dashboard in a new tab
-        window.open(`/franchise/${encodeURIComponent(slug)}`, '_blank');
+      window.open(`/sales/?franchise=${encodeURIComponent(slug.toLowerCase())}`, '_blank');
       } catch (err) {
         console.error(err);
         status.textContent = 'Unexpected error.';
